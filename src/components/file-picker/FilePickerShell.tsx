@@ -23,6 +23,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { DisplayRow } from "./FileTable";
 import { FileTable } from "./FileTable";
@@ -81,7 +82,8 @@ export function FilePickerShell() {
   const hoveredFolderIdRef = useRef<string | null>(null);
   const expandedIdsRef = useRef<Set<string>>(expandedIds);
 
-  const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
+  const { data, isLoading, isError, error, refetch } =
+    useGDriveFiles(currentFolderId);
   const indexedIdsRaw = useIndexedResourceIds();
   const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
@@ -477,6 +479,9 @@ export function FilePickerShell() {
             <p className="text-sm">
               {error instanceof Error ? error.message : "Unknown error"}
             </p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
           </div>
         ) : (
           <FileTable
