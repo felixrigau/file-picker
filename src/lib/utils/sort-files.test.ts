@@ -1,5 +1,6 @@
-import { sortFiles } from "./sort-files";
 import type { FileNode } from "@/types";
+import { describe, expect, it } from "vitest";
+import { sortFiles } from "./sort-files";
 
 const node = (
   id: string,
