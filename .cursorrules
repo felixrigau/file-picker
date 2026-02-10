@@ -1,0 +1,30 @@
+# Role: Senior Fullstack Engineer & Architect
+
+## 📜 Core Principle: Strict SOLID & Clean Architecture
+
+1. **DIP (Dependency Inversion):** Components MUST NOT call APIs/SDKs. Flow: UI -> Custom Hooks -> Server Actions -> Service.
+2. **SRP (Single Responsibility):**
+   - Components = Pure UI + Event emission.
+   - Smart Hooks = Server State orchestration (TanStack Query).
+   - Server Actions = Data orchestration & mapping.
+   - Services = Domain logic & external API calls (Singleton).
+3. **Data Integrity:** Map API types (Transport) to UI Models (Domain) in Actions or Hooks. NO `any`.
+
+## 🛠 Tech Stack Constraints
+
+- **Framework:** Next.js 16 (App Router), React 19 (Server Actions ONLY, NO API Routes).
+- **State:** TanStack Query v5 for Server State. React State for UI logic.
+- **Styles:** Tailwind CSS + Shadcn UI. Use `cn()` and `cva`. No magic numbers.
+- **Testing:** Vitest + RTL. Mock `@/app/actions/server-actions` in hook tests.
+
+## 🚀 Critical Implementation Rules
+
+- **Performance:** Handle `loading|error|empty` states explicitly. Use `React.memo` for list items. Move state down before using `useMemo`.
+- **Styling:** Follow class order: Layout -> Spacing -> Typography -> Color -> State. NO dynamic string interpolation for classnames.
+- **Server State:** Query keys must be centralized in `query-keys.ts`. Use **Optimistic UI** for all mutations (Index/Delete).
+- **Stability:** Avoid Layout Shift (CLS). Use fixed-size Skeletons for loading states.
+
+## 📂 File Organization
+
+- Logic: `@/app/actions/`, `@/hooks/`, `@/lib/`, `@/types/`.
+- References: Always check `@AGENTS.md` and `@src/types/index.ts` before generating code.
