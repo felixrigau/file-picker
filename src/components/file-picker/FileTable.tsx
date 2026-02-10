@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { FileNode } from "@/types";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, File, FileText, Folder, Plus, Table, Trash2 } from "lucide-react";
 import { memo } from "react";
 
 export type SortOrder = "asc" | "desc";
@@ -46,6 +46,32 @@ const nameCellClasses = {
 } as const;
 
 const SKELETON_ROW_COUNT = 6;
+
+/** Extension → { icon, colorClass } */
+const FILE_ICON_MAP: Record<string, { Icon: typeof File; colorClass: string }> = {
+  pdf: { Icon: FileText, colorClass: "text-red-500" },
+  csv: { Icon: Table, colorClass: "text-green-600" },
+  txt: { Icon: FileText, colorClass: "text-sky-500" },
+  "ds_store": { Icon: File, colorClass: "text-muted-foreground" },
+} as const;
+
+function FileIcon({ type, name }: { type: "file" | "folder"; name: string }) {
+  if (type === "folder") {
+    return (
+      <span aria-hidden className="shrink-0 text-blue-500">
+        <Folder className="size-4" />
+      </span>
+    );
+  }
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  const config = FILE_ICON_MAP[ext] ?? { Icon: File, colorClass: "text-muted-foreground" };
+  const { Icon, colorClass } = config;
+  return (
+    <span aria-hidden className={cn("shrink-0", colorClass)}>
+      <Icon className="size-4" />
+    </span>
+  );
+}
 
 /** Matches skeleton h-10 to prevent CLS when loading → data transition */
 const ROW_CONTENT_HEIGHT = "min-h-10";
@@ -93,12 +119,13 @@ const FileRow = memo(function FileRow({
           onMouseLeave={() => isFolder && onFolderHoverCancel?.()}
           disabled={!isFolder}
           className={cn(
-            "flex w-full items-center text-left",
+            "flex w-full items-center gap-3 text-left",
             ROW_CONTENT_HEIGHT,
             nameCellClasses[node.type],
           )}
         >
-          {node.name}
+          <FileIcon type={node.type} name={node.name} />
+          <span className="min-w-0 truncate">{node.name}</span>
         </button>
       </td>
       <td className="px-4 py-2 text-muted-foreground">
