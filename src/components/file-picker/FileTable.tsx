@@ -16,6 +16,10 @@ interface FileTableProps {
   isLoading: boolean;
   /** Called when user opens a folder (navigate into it) */
   onFolderOpen: (id: string, name: string) => void;
+  /** Called when user hovers a folder row — triggers prefetch for instant navigation */
+  onFolderHover?: (folderId: string) => void;
+  /** Called when user leaves a folder row — cancels pending prefetch */
+  onFolderHoverCancel?: () => void;
   /** Resource ids considered indexed (optimistic + API); used for Status and actions */
   indexedIds?: string[];
   /** Called when user requests index */
@@ -43,10 +47,15 @@ const nameCellClasses = {
 
 const SKELETON_ROW_COUNT = 6;
 
+/** Matches skeleton h-10 to prevent CLS when loading → data transition */
+const ROW_CONTENT_HEIGHT = "min-h-10";
+
 const FileRow = memo(function FileRow({
   node,
   indexedIds,
   onFolderOpen,
+  onFolderHover,
+  onFolderHoverCancel,
   onIndexRequest,
   onDeIndexRequest,
   isIndexPending,
@@ -55,6 +64,8 @@ const FileRow = memo(function FileRow({
   node: FileNode;
   indexedIds: Set<string>;
   onFolderOpen: (id: string, name: string) => void;
+  onFolderHover?: (folderId: string) => void;
+  onFolderHoverCancel?: () => void;
   onIndexRequest?: (node: FileNode) => void;
   onDeIndexRequest?: (node: FileNode) => void;
   isIndexPending?: (resourceId: string) => boolean;
@@ -78,9 +89,12 @@ const FileRow = memo(function FileRow({
         <button
           type="button"
           onClick={() => isFolder && onFolderOpen(node.id, node.name)}
+          onMouseEnter={() => isFolder && onFolderHover?.(node.id)}
+          onMouseLeave={() => isFolder && onFolderHoverCancel?.()}
           disabled={!isFolder}
           className={cn(
-            "w-full text-left",
+            "flex w-full items-center text-left",
+            ROW_CONTENT_HEIGHT,
             nameCellClasses[node.type],
           )}
         >
@@ -88,38 +102,44 @@ const FileRow = memo(function FileRow({
         </button>
       </td>
       <td className="px-4 py-2 text-muted-foreground">
-        {isFolder ? "Folder" : "File"}
+        <span className={cn("flex items-center", ROW_CONTENT_HEIGHT)}>
+          {isFolder ? "Folder" : "File"}
+        </span>
       </td>
       <td className="w-28 min-w-28 px-4 py-2">
         <span
-          className="inline-block w-20 text-xs"
-          aria-label={isIndexed ? "Indexed" : "Not indexed"}
+          className={cn("inline-flex items-center w-20 text-xs", ROW_CONTENT_HEIGHT)}
+          aria-label={
+            indexPending ? "Indexing" : deIndexPending ? "Removing" : isIndexed ? "Indexed" : "Not indexed"
+          }
         >
-          {isIndexed ? "Indexed" : "Not indexed"}
+          {indexPending ? "Indexing..." : deIndexPending ? "Removing..." : isIndexed ? "Indexed" : "Not indexed"}
         </span>
       </td>
       <td className="w-12 px-4 py-2">
-        {canIndex ? (
-          <button
-            type="button"
-            onClick={() => onIndexRequest?.(node)}
-            disabled={actionDisabled}
-            aria-label="Index"
-            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-          >
-            <Plus className="size-4" />
-          </button>
-        ) : canDeIndex ? (
-          <button
-            type="button"
-            onClick={() => onDeIndexRequest?.(node)}
-            disabled={actionDisabled}
-            aria-label="Remove from index"
-            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-          >
-            <Trash2 className="size-4" />
-          </button>
-        ) : null}
+        <span className={cn("flex items-center", ROW_CONTENT_HEIGHT)}>
+          {canIndex ? (
+            <button
+              type="button"
+              onClick={() => onIndexRequest?.(node)}
+              disabled={actionDisabled}
+              aria-label="Index"
+              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+            >
+              <Plus className="size-4" />
+            </button>
+          ) : canDeIndex ? (
+            <button
+              type="button"
+              onClick={() => onDeIndexRequest?.(node)}
+              disabled={actionDisabled}
+              aria-label="Remove from index"
+              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          ) : null}
+        </span>
       </td>
     </tr>
   );
@@ -142,6 +162,8 @@ export function FileTable({
   onSortToggle,
   emptyMessage = "No files found",
   onResetFilters,
+  onFolderHover,
+  onFolderHoverCancel,
 }: FileTableProps) {
   const indexedSet = new Set(indexedIds);
   const SortIcon = sortOrder === "asc" ? ArrowUp : ArrowDown;
@@ -161,7 +183,7 @@ export function FileTable({
         </thead>
         <tbody>
           {Array.from({ length: SKELETON_ROW_COUNT }).map((_, i) => (
-            <tr key={i} className="border-b border-border/50">
+            <tr key={`skeleton-${i}`} className="border-b border-border/50">
               <td className="px-4 py-2">
                 <Skeleton className="h-10 w-full max-w-48" />
               </td>
@@ -231,6 +253,8 @@ export function FileTable({
             node={node}
             indexedIds={indexedSet}
             onFolderOpen={onFolderOpen}
+            onFolderHover={onFolderHover}
+            onFolderHoverCancel={onFolderHoverCancel}
             onIndexRequest={onIndexRequest}
             onDeIndexRequest={onDeIndexRequest}
             isIndexPending={isIndexPending}

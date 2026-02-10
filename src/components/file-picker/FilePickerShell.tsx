@@ -1,18 +1,21 @@
 "use client";
 
+import { getFilesAction } from "@/app/actions/server-actions";
 import {
   useActiveKnowledgeBaseId,
   useGDriveFiles,
   useIndexedResourceIds,
   useKBActions,
 } from "@/hooks";
+import { stackAIQueryKeys } from "@/hooks/query-keys";
 import { applyFilters } from "@/lib/utils/filter-files";
 import { sortFiles } from "@/lib/utils/sort-files";
 import { cn } from "@/lib/utils";
 import type { FileNode, StatusFilter, TypeFilter } from "@/types";
 import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useTransition } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FileTable } from "./FileTable";
 import { FilterDropdown } from "./FilterDropdown";
@@ -61,6 +64,9 @@ export function FilePickerShell() {
   );
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbSegment[]>([]);
   const [searchFilter, setSearchFilter] = useState("");
+  const [, startTransition] = useTransition();
+  const queryClient = useQueryClient();
+  const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
   const indexedIdsRaw = useIndexedResourceIds();
@@ -134,21 +140,27 @@ export function FilePickerShell() {
   );
 
   const handleStatusChange = useCallback(
-    (status: StatusFilter) => updateUrlParams({ status }),
+    (status: StatusFilter) => {
+      startTransition(() => updateUrlParams({ status }));
+    },
     [updateUrlParams],
   );
 
   const handleTypeChange = useCallback(
-    (type: TypeFilter) => updateUrlParams({ type }),
+    (type: TypeFilter) => {
+      startTransition(() => updateUrlParams({ type }));
+    },
     [updateUrlParams],
   );
 
   const handleClearFilters = useCallback(() => {
-    setSearchFilter("");
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete(STATUS_PARAM);
-    params.delete(TYPE_PARAM);
-    router.push(`?${params.toString()}`, { scroll: false });
+    startTransition(() => {
+      setSearchFilter("");
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete(STATUS_PARAM);
+      params.delete(TYPE_PARAM);
+      router.push(`?${params.toString()}`, { scroll: false });
+    });
   }, [searchParams, router]);
 
   const hasActiveFilters =
@@ -162,10 +174,12 @@ export function FilePickerShell() {
   );
 
   const handleSortToggle = useCallback(() => {
-    const next = sortOrder === "asc" ? "desc" : "asc";
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(SORT_ORDER_PARAM, next);
-    router.push(`?${params.toString()}`, { scroll: false });
+    startTransition(() => {
+      const next = sortOrder === "asc" ? "desc" : "asc";
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(SORT_ORDER_PARAM, next);
+      router.push(`?${params.toString()}`, { scroll: false });
+    });
   }, [sortOrder, searchParams, router]);
 
   const handleFolderOpen = useCallback(
@@ -174,6 +188,30 @@ export function FilePickerShell() {
     },
     [mapsTo],
   );
+
+  const PREFETCH_DELAY_MS = 100;
+
+  const handleFolderHover = useCallback(
+    (folderId: string) => {
+      if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+      prefetchTimerRef.current = setTimeout(() => {
+        prefetchTimerRef.current = null;
+        queryClient.prefetchQuery({
+          queryKey: stackAIQueryKeys.gdrive(folderId),
+          queryFn: () => getFilesAction(folderId),
+        });
+      }, PREFETCH_DELAY_MS);
+    },
+    [queryClient],
+  );
+
+  const handleFolderHoverCancel = useCallback(() => {
+    if (prefetchTimerRef.current) {
+      clearTimeout(prefetchTimerRef.current);
+      prefetchTimerRef.current = null;
+    }
+  }, []);
+
 
   const handleIndexRequest = useCallback(
     (node: FileNode) => {
@@ -308,6 +346,8 @@ export function FilePickerShell() {
             resources={sortedResources}
             isLoading={isLoading}
             onFolderOpen={handleFolderOpen}
+            onFolderHover={handleFolderHover}
+            onFolderHoverCancel={handleFolderHoverCancel}
             indexedIds={indexedIdsRaw}
             onIndexRequest={handleIndexRequest}
             onDeIndexRequest={handleDeIndexRequest}
