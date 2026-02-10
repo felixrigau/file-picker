@@ -80,7 +80,7 @@ jobs:
       - name: Run Lighthouse CI (prod)
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx lhci autorun --upload.target=temporary-public-storage
+        run: npx lhci autorun --upload.target=temporary-public-storage --collect.start-server-command=
 
       - name: Upload Lighthouse reports
         if: always()
