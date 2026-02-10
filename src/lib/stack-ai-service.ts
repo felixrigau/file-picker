@@ -125,10 +125,21 @@ export class StackAIService {
       );
     }
 
-    if (res.headers.get("content-type")?.includes("application/json")) {
-      return res.json() as Promise<T>;
+    const contentType = res.headers.get("content-type");
+    const contentLength = res.headers.get("content-length");
+    if (
+      res.status === 204 ||
+      contentLength === "0" ||
+      !contentType?.includes("application/json")
+    ) {
+      return undefined as T;
     }
-    return undefined as T;
+
+    try {
+      return (await res.json()) as T;
+    } catch {
+      return undefined as T;
+    }
   }
 
   /**
@@ -284,9 +295,7 @@ export class StackAIService {
   ): Promise<void> {
     const baseUrl = `${BACKEND_URL}/knowledge_bases/${knowledgeBaseId}/resources`;
     const url = `${baseUrl}?${new URLSearchParams({ resource_path: resourcePath }).toString()}`;
-    await this.request<unknown>("DELETE", url, {
-      body: JSON.stringify({ resource_path: resourcePath }),
-    });
+    await this.request<unknown>("DELETE", url);
   }
 }
 
