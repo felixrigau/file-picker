@@ -64,6 +64,7 @@ jobs:
   lighthouse:
     name: Lighthouse CI
     runs-on: ubuntu-latest
+    needs: [lint, type-check]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
@@ -90,4 +91,3 @@ jobs:
           path: .lighthouseci
           include-hidden-files: true
           retention-days: 7
-

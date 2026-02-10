@@ -11,6 +11,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "check": "npm run lint && npm run type-check && npm run test:run",
+    "audit:ci": "lhci autorun --upload.target=temporary-public-storage",
+    "badges:generate": "node scripts/generate-lighthouse-badges.js",
     "audit:lighthouse": "echo 'Build: npm run build && npm run start' && echo 'Then: Chrome DevTools > Lighthouse > Performance + Best Practices > Analyze' && echo 'Targets: Performance >95, Best Practices >95, CLS=0'",
     "docs:generate": "typedoc && echo 'Docs generated in docs/api-reference'",
     "prepare": "husky"
