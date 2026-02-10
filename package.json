@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "serve:lhci": "NODE_ENV=production next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest",
