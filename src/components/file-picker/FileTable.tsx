@@ -16,6 +16,10 @@ interface FileTableProps {
   isLoading: boolean;
   /** Called when user opens a folder (navigate into it) */
   onFolderOpen: (id: string, name: string) => void;
+  /** Called when user hovers a folder row — triggers prefetch for instant navigation */
+  onFolderHover?: (folderId: string) => void;
+  /** Called when user leaves a folder row — cancels pending prefetch */
+  onFolderHoverCancel?: () => void;
   /** Resource ids considered indexed (optimistic + API); used for Status and actions */
   indexedIds?: string[];
   /** Called when user requests index */
@@ -50,6 +54,8 @@ const FileRow = memo(function FileRow({
   node,
   indexedIds,
   onFolderOpen,
+  onFolderHover,
+  onFolderHoverCancel,
   onIndexRequest,
   onDeIndexRequest,
   isIndexPending,
@@ -58,6 +64,8 @@ const FileRow = memo(function FileRow({
   node: FileNode;
   indexedIds: Set<string>;
   onFolderOpen: (id: string, name: string) => void;
+  onFolderHover?: (folderId: string) => void;
+  onFolderHoverCancel?: () => void;
   onIndexRequest?: (node: FileNode) => void;
   onDeIndexRequest?: (node: FileNode) => void;
   isIndexPending?: (resourceId: string) => boolean;
@@ -81,6 +89,8 @@ const FileRow = memo(function FileRow({
         <button
           type="button"
           onClick={() => isFolder && onFolderOpen(node.id, node.name)}
+          onMouseEnter={() => isFolder && onFolderHover?.(node.id)}
+          onMouseLeave={() => isFolder && onFolderHoverCancel?.()}
           disabled={!isFolder}
           className={cn(
             "flex w-full items-center text-left",
@@ -99,9 +109,11 @@ const FileRow = memo(function FileRow({
       <td className="w-28 min-w-28 px-4 py-2">
         <span
           className={cn("inline-flex items-center w-20 text-xs", ROW_CONTENT_HEIGHT)}
-          aria-label={isIndexed ? "Indexed" : "Not indexed"}
+          aria-label={
+            indexPending ? "Indexing" : deIndexPending ? "Removing" : isIndexed ? "Indexed" : "Not indexed"
+          }
         >
-          {isIndexed ? "Indexed" : "Not indexed"}
+          {indexPending ? "Indexing..." : deIndexPending ? "Removing..." : isIndexed ? "Indexed" : "Not indexed"}
         </span>
       </td>
       <td className="w-12 px-4 py-2">
@@ -150,6 +162,8 @@ export function FileTable({
   onSortToggle,
   emptyMessage = "No files found",
   onResetFilters,
+  onFolderHover,
+  onFolderHoverCancel,
 }: FileTableProps) {
   const indexedSet = new Set(indexedIds);
   const SortIcon = sortOrder === "asc" ? ArrowUp : ArrowDown;
@@ -239,6 +253,8 @@ export function FileTable({
             node={node}
             indexedIds={indexedSet}
             onFolderOpen={onFolderOpen}
+            onFolderHover={onFolderHover}
+            onFolderHoverCancel={onFolderHoverCancel}
             onIndexRequest={onIndexRequest}
             onDeIndexRequest={onDeIndexRequest}
             isIndexPending={isIndexPending}
