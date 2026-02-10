@@ -5,30 +5,47 @@ import type {
 } from "@/types";
 
 /**
- * Pure function: filters files/folders by name.
- * Case-insensitive. Returns all items when searchQuery is empty or only whitespace.
+ * Extracts the file extension from a filename (e.g. "report.pdf" → "pdf").
+ * Returns lowercase. Returns the last segment after a dot; "file" with no dot returns "file".
+ *
+ * @param filename - The file or folder name
+ * @returns The extension in lowercase, or empty string if none
+ * @internal
+ */
+function extractFileExtension(filename: string): string {
+  const lastSegment = filename.split(".").pop()?.toLowerCase();
+  return lastSegment ?? "";
+}
+
+/**
+ * Filters file nodes by name using a case-insensitive substring match.
+ * Returns the full list when the search query is empty or only whitespace.
  *
  * @param files - List of FileNode to filter
- * @param searchQuery - Search term (trimmed, case-insensitive match)
- * @returns Filtered list where node.name includes the query
+ * @param searchQuery - Search term (trimmed automatically; matching is case-insensitive)
+ * @returns Filtered list where each node's name contains the query
  */
 export function filterFilesByName(
   files: FileNode[],
   searchQuery: string,
 ): FileNode[] {
-  const trimmed = searchQuery.trim();
-  if (!trimmed) return files;
+  const trimmedQuery = searchQuery.trim();
+  if (!trimmedQuery) return files;
 
-  const q = trimmed.toLowerCase();
-  return files.filter((node) => node.name.toLowerCase().includes(q));
+  const normalizedSearchTerm = trimmedQuery.toLowerCase();
+  return files.filter((node) =>
+    node.name.toLowerCase().includes(normalizedSearchTerm),
+  );
 }
 
 /**
- * Pure function: filters files by indexed status.
+ * Filters file nodes by their indexed status in the Knowledge Base.
+ * Combines `node.isIndexed` with `indexedIds` to support optimistic updates.
  *
  * @param files - List of FileNode to filter
- * @param status - "all" | "indexed" | "not-indexed"
- * @param indexedIds - Set of resource ids considered indexed (optimistic + API)
+ * @param status - Filter mode: "all" (no filter), "indexed", or "not-indexed"
+ * @param indexedIds - Set of resource IDs considered indexed (from cache + API)
+ * @returns Filtered list matching the status criteria
  */
 export function filterFilesByStatus(
   files: FileNode[],
@@ -36,19 +53,20 @@ export function filterFilesByStatus(
   indexedIds: Set<string>,
 ): FileNode[] {
   if (status === "all") return files;
+
+  const showIndexedOnly = status === "indexed";
   return files.filter((node) => {
     const isIndexed = node.isIndexed || indexedIds.has(node.id);
-    return status === "indexed" ? isIndexed : !isIndexed;
+    return showIndexedOnly ? isIndexed : !isIndexed;
   });
 }
 
-function getFileExtension(name: string): string {
-  const ext = name.split(".").pop()?.toLowerCase() ?? "";
-  return ext;
-}
-
 /**
- * Pure function: filters files by type (folder, file, or extension).
+ * Filters file nodes by type: folder, file, or a specific file extension.
+ *
+ * @param files - List of FileNode to filter
+ * @param type - Filter mode: "all", "folder", "file", or extension ("pdf" | "csv" | "txt")
+ * @returns Filtered list matching the type criteria
  */
 export function filterFilesByType(
   files: FileNode[],
@@ -61,13 +79,23 @@ export function filterFilesByType(
   if (type === "file") {
     return files.filter((node) => node.type === "file");
   }
-  const ext = type;
+
+  const extensionFilter = type;
   return files.filter(
-    (node) => node.type === "file" && getFileExtension(node.name) === ext,
+    (node) =>
+      node.type === "file" &&
+      extractFileExtension(node.name) === extensionFilter,
   );
 }
 
-/** Params for applyFilters */
+/**
+ * Parameters for composing all filters in a single call.
+ *
+ * @property searchQuery - Text to match against file/folder names (case-insensitive)
+ * @property status - Filter by indexed state: "all" | "indexed" | "not-indexed"
+ * @property type - Filter by type: "all" | "folder" | "file" | "pdf" | "csv" | "txt"
+ * @property indexedIds - Set of resource IDs considered indexed
+ */
 export interface ApplyFiltersParams {
   searchQuery: string;
   status: StatusFilter;
@@ -76,14 +104,22 @@ export interface ApplyFiltersParams {
 }
 
 /**
- * Composes all filters with AND. Order: name → status → type.
+ * Applies all filters in sequence with AND logic.
+ * Order: name search → status → type.
+ *
+ * @param files - List of FileNode to filter
+ * @param params - Filter parameters
+ * @returns Filtered list matching all criteria
  */
 export function applyFilters(
   files: FileNode[],
   params: ApplyFiltersParams,
 ): FileNode[] {
-  let result = filterFilesByName(files, params.searchQuery);
-  result = filterFilesByStatus(result, params.status, params.indexedIds);
-  result = filterFilesByType(result, params.type);
-  return result;
+  const afterNameFilter = filterFilesByName(files, params.searchQuery);
+  const afterStatusFilter = filterFilesByStatus(
+    afterNameFilter,
+    params.status,
+    params.indexedIds,
+  );
+  return filterFilesByType(afterStatusFilter, params.type);
 }

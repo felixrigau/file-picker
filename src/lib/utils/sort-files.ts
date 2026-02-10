@@ -1,28 +1,40 @@
 import type { FileNode } from "@/types";
 
+/** Sort direction: ascending (A-Z) or descending (Z-A) */
 export type SortOrder = "asc" | "desc";
 
-const LOCALE_COMPARE_OPTS: Intl.CollatorOptions = {
+/** Collator options for locale-aware alphanumeric comparison (e.g. archivo2 before archivo10) */
+const LOCALE_COLLATOR_OPTIONS: Intl.CollatorOptions = {
   numeric: true,
   sensitivity: "base",
 };
 
 /**
- * Pure function: sorts files/folders by name.
- * Folders always appear first (Finder/Explorer behavior).
- * Uses localeCompare for proper alphanumeric order (archivo10 after archivo2)
- * and accent/case insensitivity.
+ * Sorts file nodes by name with folders always first (Finder/Explorer behavior).
+ * Uses localeCompare for proper alphanumeric order and accent/case insensitivity.
+ *
+ * @param files - List of FileNode to sort (not mutated)
+ * @param sortOrder - "asc" (A-Z) or "desc" (Z-A)
+ * @returns A new sorted array; folders first, then files, each group sorted by name
  */
 export function sortFiles(
   files: FileNode[],
-  sortOrder: SortOrder
+  sortOrder: SortOrder,
 ): FileNode[] {
-  const sorted = [...files].sort((a, b) => {
+  const isAscending = sortOrder === "asc";
+
+  return [...files].sort((a, b) => {
     if (a.type !== b.type) {
-      return a.type === "folder" ? -1 : 1;
+      const folderFirst = -1;
+      const fileFirst = 1;
+      return a.type === "folder" ? folderFirst : fileFirst;
     }
-    const cmp = a.name.localeCompare(b.name, undefined, LOCALE_COMPARE_OPTS);
-    return sortOrder === "asc" ? cmp : -cmp;
+
+    const nameComparisonResult = a.name.localeCompare(
+      b.name,
+      undefined,
+      LOCALE_COLLATOR_OPTIONS,
+    );
+    return isAscending ? nameComparisonResult : -nameComparisonResult;
   });
-  return sorted;
 }
