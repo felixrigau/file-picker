@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/actions/server-actions", () => ({
   getConnectionIdAction: vi.fn(),
+  getDescendantResourceIdsAction: vi.fn(),
   syncToKnowledgeBaseAction: vi.fn(),
   deleteFromKnowledgeBaseAction: vi.fn(),
 }));
@@ -36,6 +37,9 @@ describe("useKBActions", () => {
     vi.mocked(actions.deleteFromKnowledgeBaseAction).mockResolvedValue(
       undefined,
     );
+    vi.mocked(actions.getDescendantResourceIdsAction).mockImplementation(
+      (id) => Promise.resolve([id]),
+    );
   });
 
   afterEach(() => {
@@ -56,8 +60,11 @@ describe("useKBActions", () => {
     const indexedKey = stackAIQueryKeys.indexedIds();
     expect(queryClient.getQueryData<string[]>(indexedKey)).toBeUndefined();
 
-    act(() => {
-      result.current.indexResource.mutate(["res-1", "res-2"]);
+    await act(async () => {
+      result.current.indexResource.mutate({
+        node: { id: "res-1", type: "file" },
+        expandedIds: ["res-1", "res-2"],
+      });
     });
 
     await waitFor(() => {
@@ -88,8 +95,11 @@ describe("useKBActions", () => {
     const indexedKey = stackAIQueryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["existing"]);
 
-    act(() => {
-      result.current.indexResource.mutate(["res-new"]);
+    await act(async () => {
+      result.current.indexResource.mutate({
+        node: { id: "res-new", type: "file" },
+        expandedIds: ["res-new"],
+      });
     });
 
     await waitFor(() => {
@@ -115,8 +125,11 @@ describe("useKBActions", () => {
       wrapper: createWrapper(queryClient),
     });
 
-    act(() => {
-      result.current.indexResource.mutate(["res-1"]);
+    await act(async () => {
+      result.current.indexResource.mutate({
+        node: { id: "res-1", type: "file" },
+        expandedIds: ["res-1"],
+      });
     });
 
     await waitFor(() => {
