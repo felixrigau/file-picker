@@ -43,6 +43,9 @@ const nameCellClasses = {
 
 const SKELETON_ROW_COUNT = 6;
 
+/** Matches skeleton h-10 to prevent CLS when loading → data transition */
+const ROW_CONTENT_HEIGHT = "min-h-10";
+
 const FileRow = memo(function FileRow({
   node,
   indexedIds,
@@ -80,7 +83,8 @@ const FileRow = memo(function FileRow({
           onClick={() => isFolder && onFolderOpen(node.id, node.name)}
           disabled={!isFolder}
           className={cn(
-            "w-full text-left",
+            "flex w-full items-center text-left",
+            ROW_CONTENT_HEIGHT,
             nameCellClasses[node.type],
           )}
         >
@@ -88,38 +92,42 @@ const FileRow = memo(function FileRow({
         </button>
       </td>
       <td className="px-4 py-2 text-muted-foreground">
-        {isFolder ? "Folder" : "File"}
+        <span className={cn("flex items-center", ROW_CONTENT_HEIGHT)}>
+          {isFolder ? "Folder" : "File"}
+        </span>
       </td>
       <td className="w-28 min-w-28 px-4 py-2">
         <span
-          className="inline-block w-20 text-xs"
+          className={cn("inline-flex items-center w-20 text-xs", ROW_CONTENT_HEIGHT)}
           aria-label={isIndexed ? "Indexed" : "Not indexed"}
         >
           {isIndexed ? "Indexed" : "Not indexed"}
         </span>
       </td>
       <td className="w-12 px-4 py-2">
-        {canIndex ? (
-          <button
-            type="button"
-            onClick={() => onIndexRequest?.(node)}
-            disabled={actionDisabled}
-            aria-label="Index"
-            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-          >
-            <Plus className="size-4" />
-          </button>
-        ) : canDeIndex ? (
-          <button
-            type="button"
-            onClick={() => onDeIndexRequest?.(node)}
-            disabled={actionDisabled}
-            aria-label="Remove from index"
-            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-          >
-            <Trash2 className="size-4" />
-          </button>
-        ) : null}
+        <span className={cn("flex items-center", ROW_CONTENT_HEIGHT)}>
+          {canIndex ? (
+            <button
+              type="button"
+              onClick={() => onIndexRequest?.(node)}
+              disabled={actionDisabled}
+              aria-label="Index"
+              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+            >
+              <Plus className="size-4" />
+            </button>
+          ) : canDeIndex ? (
+            <button
+              type="button"
+              onClick={() => onDeIndexRequest?.(node)}
+              disabled={actionDisabled}
+              aria-label="Remove from index"
+              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          ) : null}
+        </span>
       </td>
     </tr>
   );
@@ -161,7 +169,7 @@ export function FileTable({
         </thead>
         <tbody>
           {Array.from({ length: SKELETON_ROW_COUNT }).map((_, i) => (
-            <tr key={i} className="border-b border-border/50">
+            <tr key={`skeleton-${i}`} className="border-b border-border/50">
               <td className="px-4 py-2">
                 <Skeleton className="h-10 w-full max-w-48" />
               </td>
