@@ -6,10 +6,10 @@ import { stackAIQueryKeys } from "./query-keys";
 
 /**
  * Fetches GDrive file/folder list for the given folder (root when folderId is omitted).
- * Uses Server Action that calls getStackAIService().fetchGDriveContents().
+ * Uses Server Action that maps StackAIResource → FileNode at the Action level.
  *
  * @param folderId - Optional resource_id to list children of; omit for root
- * @returns TanStack Query result with PaginatedResponse<StackAIResource>
+ * @returns TanStack Query result with PaginatedResponse<FileNode>
  */
 export function useGDriveFiles(folderId?: string) {
   return useQuery({

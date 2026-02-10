@@ -1,16 +1,25 @@
 "use server";
 
+import { mapStackAIResourceToFileNode } from "@/lib/stack-ai-mappers";
 import { getStackAIService } from "@/lib/stack-ai-service";
 import type {
+  FileNode,
   IndexingParams,
   PaginatedResponse,
-  StackAIResource,
 } from "@/types";
 
 export async function getFilesAction(
   folderId?: string,
-): Promise<PaginatedResponse<StackAIResource>> {
-  return getStackAIService().fetchGDriveContents(folderId);
+): Promise<PaginatedResponse<FileNode>> {
+  const response = await getStackAIService().fetchGDriveContents(folderId);
+  const data: FileNode[] = response.data.map((r) =>
+    mapStackAIResourceToFileNode(r, folderId),
+  );
+  return {
+    data,
+    next_cursor: response.next_cursor,
+    current_cursor: response.current_cursor,
+  };
 }
 
 export async function getConnectionIdAction(): Promise<{
