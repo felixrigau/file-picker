@@ -28,8 +28,13 @@ export interface ResourceRow {
   depth: number;
 }
 
+/** Row to display: resource or skeleton during load */
+export type DisplayRow =
+  | { type: "resource"; node: FileNode; depth: number }
+  | { type: "skeleton"; folderId: string; depth: number; index: number };
+
 interface FileTableProps {
-  resources: ResourceRow[];
+  resources: DisplayRow[];
   isLoading: boolean;
   onFolderOpen: (id: string, name: string) => void;
   onFolderHover?: (folderId: string) => void;
@@ -249,6 +254,31 @@ const FileRow = memo(function FileRow({
   );
 });
 
+function SkeletonRow({ depth }: { depth: number }) {
+  return (
+    <tr className="border-b border-border/50">
+      <td className="w-10 px-2 py-2">
+        <Skeleton className="h-10 w-4" />
+      </td>
+      <td className="px-4 py-2">
+        <div
+          className={cn("flex items-center gap-2", ROW_CONTENT_HEIGHT)}
+          style={{ paddingLeft: `${12 + depth * 16}px` }}
+        >
+          <span className="w-5 shrink-0" aria-hidden />
+          <Skeleton className="h-10 w-full max-w-48" />
+        </div>
+      </td>
+      <td className="w-28 min-w-28 px-4 py-2">
+        <Skeleton className="h-10 w-20" />
+      </td>
+      <td className="w-24 px-4 py-2">
+        <Skeleton className="h-10 w-16" />
+      </td>
+    </tr>
+  );
+}
+
 export function FileTable({
   resources,
   isLoading,
@@ -347,24 +377,28 @@ export function FileTable({
         </tr>
       </thead>
       <tbody>
-        {resources.map((row) => (
-          <FileRow
-            key={row.node.id}
-            row={row}
-            indexedIds={indexedSet}
-            expandedIds={expandedIds}
-            selectedIds={selectedIds}
-            onFolderOpen={onFolderOpen}
-            onFolderHover={onFolderHover}
-            onFolderHoverCancel={onFolderHoverCancel}
-            onFolderToggle={onFolderToggle}
-            onSelectionChange={onSelectionChange}
-            onIndexRequest={onIndexRequest}
-            onDeIndexRequest={onDeIndexRequest}
-            isIndexPending={isIndexPending}
-            isDeIndexPending={isDeIndexPending}
-          />
-        ))}
+        {resources.map((row) =>
+          row.type === "resource" ? (
+            <FileRow
+              key={row.node.id}
+              row={{ node: row.node, depth: row.depth }}
+              indexedIds={indexedSet}
+              expandedIds={expandedIds}
+              selectedIds={selectedIds}
+              onFolderOpen={onFolderOpen}
+              onFolderHover={onFolderHover}
+              onFolderHoverCancel={onFolderHoverCancel}
+              onFolderToggle={onFolderToggle}
+              onSelectionChange={onSelectionChange}
+              onIndexRequest={onIndexRequest}
+              onDeIndexRequest={onDeIndexRequest}
+              isIndexPending={isIndexPending}
+              isDeIndexPending={isDeIndexPending}
+            />
+          ) : (
+            <SkeletonRow key={`skeleton-${row.folderId}-${row.index}`} depth={row.depth} />
+          ),
+        )}
       </tbody>
     </table>
   );

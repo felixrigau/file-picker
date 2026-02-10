@@ -17,7 +17,7 @@ import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import type { ResourceRow } from "./FileTable";
+import type { DisplayRow } from "./FileTable";
 import { FileTable } from "./FileTable";
 import { FilterDropdown } from "./FilterDropdown";
 
@@ -195,7 +195,12 @@ export function FilePickerShell() {
     let cancelled = false;
     Promise.all(
       toFetch.map((id) =>
-        getFilesAction(id).then((r) => ({ id, data: r.data })),
+        queryClient
+          .fetchQuery({
+            queryKey: stackAIQueryKeys.gdrive(id),
+            queryFn: () => getFilesAction(id),
+          })
+          .then((r) => ({ id, data: r.data })),
       ),
     ).then((results) => {
       if (cancelled) return;
@@ -210,18 +215,22 @@ export function FilePickerShell() {
     return () => {
       cancelled = true;
     };
-  }, [expandedIds, childData]);
+  }, [expandedIds, childData, queryClient]);
 
-  const displayedResources = useMemo((): ResourceRow[] => {
-    const rows: ResourceRow[] = [];
+  const displayedResources = useMemo((): DisplayRow[] => {
+    const rows: DisplayRow[] = [];
     for (const node of sortedResources) {
-      rows.push({ node, depth: 0 });
+      rows.push({ type: "resource", node, depth: 0 });
       if (node.type === "folder" && expandedIds.has(node.id)) {
         const children = childData.get(node.id);
         if (children) {
           const sortedChildren = sortFiles(children, sortOrder);
           for (const child of sortedChildren) {
-            rows.push({ node: child, depth: 1 });
+            rows.push({ type: "resource", node: child, depth: 1 });
+          }
+        } else {
+          for (let i = 0; i < 3; i++) {
+            rows.push({ type: "skeleton", folderId: node.id, depth: 1, index: i });
           }
         }
       }
