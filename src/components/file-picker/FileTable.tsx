@@ -1,13 +1,16 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { FileNode } from "@/types";
-import { Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { memo } from "react";
 
+export type SortOrder = "asc" | "desc";
+
 interface FileTableProps {
-  /** Domain file nodes to display (data from useGDriveFiles) */
+  /** Domain file nodes to display (sorted data from parent) */
   resources: FileNode[];
   /** Whether the data is currently loading */
   isLoading: boolean;
@@ -23,6 +26,12 @@ interface FileTableProps {
   isIndexPending?: (resourceId: string) => boolean;
   /** Whether de-index mutation is pending for this resource */
   isDeIndexPending?: (resourceId: string) => boolean;
+  /** Current sort order for Name column; enables sortable header */
+  sortOrder?: SortOrder;
+  /** Called when user clicks the Name header to toggle sort */
+  onSortToggle?: () => void;
+  /** Message when list is empty (e.g. "No files found" when filtered, "No files or folders" when folder empty) */
+  emptyMessage?: string;
 }
 
 const nameCellClasses = {
@@ -127,8 +136,12 @@ export function FileTable({
   onDeIndexRequest,
   isIndexPending,
   isDeIndexPending,
+  sortOrder = "asc",
+  onSortToggle,
+  emptyMessage = "No files found",
 }: FileTableProps) {
   const indexedSet = new Set(indexedIds);
+  const SortIcon = sortOrder === "asc" ? ArrowUp : ArrowDown;
 
   if (isLoading) {
     return (
@@ -168,7 +181,7 @@ export function FileTable({
   if (resources.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 text-muted-foreground">
-        No files or folders
+        {emptyMessage}
       </div>
     );
   }
@@ -177,7 +190,25 @@ export function FileTable({
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-border">
-          <th className="px-4 py-2 text-left font-medium">Name</th>
+          <th
+            className="px-4 py-2 text-left font-medium"
+            aria-sort={sortOrder === "asc" ? "ascending" : "descending"}
+          >
+            {onSortToggle ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto gap-1.5 px-0 font-medium hover:bg-transparent"
+                onClick={onSortToggle}
+                aria-label={`Sort by name ${sortOrder === "asc" ? "descending" : "ascending"}`}
+              >
+                Name
+                <SortIcon className="size-4" />
+              </Button>
+            ) : (
+              "Name"
+            )}
+          </th>
           <th className="px-4 py-2 text-left font-medium">Type</th>
           <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">
             Status
