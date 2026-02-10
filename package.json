@@ -10,7 +10,9 @@
     "type-check": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest",
     "test:run": "vitest run",
-    "docs:generate": "typedoc && echo 'Docs generated in docs/api-reference'"
+    "check": "npm run lint && npm run type-check && npm run test:run",
+    "docs:generate": "typedoc && echo 'Docs generated in docs/api-reference'",
+    "prepare": "husky"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.20",
@@ -36,6 +38,7 @@
     "@vitejs/plugin-react": "^4.5.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "shadcn": "^3.8.4",
     "tailwindcss": "^4",
