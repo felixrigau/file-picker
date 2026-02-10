@@ -9,8 +9,8 @@ import {
 import { getGDriveQueryOptions } from "@/hooks/use-gdrive-files";
 import { queryKeys } from "@/hooks/query-keys";
 import { cn } from "@/lib/utils";
-import { applyFilters } from "@/lib/utils/filter-files";
-import { sortFiles } from "@/lib/utils/sort-files";
+import { applyFilters } from "@/utils/filter-files";
+import { sortFiles } from "@/utils/sort-files";
 import type { FileNode, StatusFilter, TypeFilter } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
@@ -74,7 +74,9 @@ export function FilePickerShell() {
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbSegment[]>([]);
   const [searchFilter, setSearchFilter] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [childData, setChildData] = useState<Map<string, FileNode[]>>(new Map());
+  const [childData, setChildData] = useState<Map<string, FileNode[]>>(
+    new Map(),
+  );
   const [, startTransition] = useTransition();
   const queryClient = useQueryClient();
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -279,7 +281,12 @@ export function FilePickerShell() {
             addNodes(sortFiles(children, sortOrder), depth + 1);
           } else {
             for (let i = 0; i < 3; i++) {
-              rows.push({ type: "skeleton", folderId: node.id, depth: depth + 1, index: i });
+              rows.push({
+                type: "skeleton",
+                folderId: node.id,
+                depth: depth + 1,
+                index: i,
+              });
             }
           }
         }
@@ -376,7 +383,8 @@ export function FilePickerShell() {
         return deIndexResource.variables?.resourceId === resourceId;
       }
       if (deIndexFolder.isPending) {
-        const ids = deIndexFolder.variables?.items?.map((i) => i.resourceId) ?? [];
+        const ids =
+          deIndexFolder.variables?.items?.map((i) => i.resourceId) ?? [];
         return ids.includes(resourceId);
       }
       return false;
@@ -447,65 +455,67 @@ export function FilePickerShell() {
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
           {isMissingEnv ? (
-          <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
-            <p className="font-medium">Environment variables not configured</p>
-            <p className="text-sm">
-              Copy{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                .env.local.example
-              </code>{" "}
-              to{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                .env.local
-              </code>{" "}
-              and fill in{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                NEXT_PUBLIC_STACK_AI_ANON_KEY
-              </code>
-              ,{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                STACK_AI_EMAIL
-              </code>{" "}
-              and{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                STACK_AI_PASSWORD
-              </code>
-              .
-            </p>
-          </div>
-        ) : hasGenericError ? (
-          <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
-            <p className="font-medium">Error loading files</p>
-            <p className="text-sm">
-              {error instanceof Error ? error.message : "Unknown error"}
-            </p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Retry
-            </Button>
-          </div>
-        ) : (
-          <FileTable
-            resources={displayedResources}
-            isLoading={isLoading}
-            onFolderHover={handleFolderHover}
-            onFolderHoverCancel={handleFolderHoverCancel}
-            onFolderToggle={handleFolderToggle}
-            expandedIds={expandedIds}
-            indexedIds={indexedIdsRaw}
-            onIndexRequest={handleIndexRequest}
-            onDeIndexRequest={handleDeIndexRequest}
-            isIndexPending={isIndexPending}
-            isDeIndexPending={isDeIndexPending}
-            sortOrder={sortOrder}
-            onSortToggle={handleSortToggle}
-            emptyMessage={
-              (data?.data?.length ?? 0) === 0
-                ? "No files or folders"
-                : "No files found"
-            }
-            onResetFilters={hasActiveFilters ? handleClearFilters : undefined}
-          />
-        )}
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
+              <p className="font-medium">
+                Environment variables not configured
+              </p>
+              <p className="text-sm">
+                Copy{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                  .env.local.example
+                </code>{" "}
+                to{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                  .env.local
+                </code>{" "}
+                and fill in{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                  NEXT_PUBLIC_STACK_AI_ANON_KEY
+                </code>
+                ,{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                  STACK_AI_EMAIL
+                </code>{" "}
+                and{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                  STACK_AI_PASSWORD
+                </code>
+                .
+              </p>
+            </div>
+          ) : hasGenericError ? (
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
+              <p className="font-medium">Error loading files</p>
+              <p className="text-sm">
+                {error instanceof Error ? error.message : "Unknown error"}
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <FileTable
+              resources={displayedResources}
+              isLoading={isLoading}
+              onFolderHover={handleFolderHover}
+              onFolderHoverCancel={handleFolderHoverCancel}
+              onFolderToggle={handleFolderToggle}
+              expandedIds={expandedIds}
+              indexedIds={indexedIdsRaw}
+              onIndexRequest={handleIndexRequest}
+              onDeIndexRequest={handleDeIndexRequest}
+              isIndexPending={isIndexPending}
+              isDeIndexPending={isDeIndexPending}
+              sortOrder={sortOrder}
+              onSortToggle={handleSortToggle}
+              emptyMessage={
+                (data?.data?.length ?? 0) === 0
+                  ? "No files or folders"
+                  : "No files found"
+              }
+              onResetFilters={hasActiveFilters ? handleClearFilters : undefined}
+            />
+          )}
         </div>
       </div>
     </div>
