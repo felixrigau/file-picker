@@ -32,6 +32,8 @@ interface FileTableProps {
   onSortToggle?: () => void;
   /** Message when list is empty (e.g. "No files found" when filtered, "No files or folders" when folder empty) */
   emptyMessage?: string;
+  /** Called when user clicks Reset filters in empty state (only shown when filters are active) */
+  onResetFilters?: () => void;
 }
 
 const nameCellClasses = {
@@ -139,6 +141,7 @@ export function FileTable({
   sortOrder = "asc",
   onSortToggle,
   emptyMessage = "No files found",
+  onResetFilters,
 }: FileTableProps) {
   const indexedSet = new Set(indexedIds);
   const SortIcon = sortOrder === "asc" ? ArrowUp : ArrowDown;
@@ -180,8 +183,13 @@ export function FileTable({
 
   if (resources.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground">
-        {emptyMessage}
+      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-muted-foreground">
+        <p>{emptyMessage}</p>
+        {onResetFilters && (
+          <Button variant="outline" size="sm" onClick={onResetFilters}>
+            Reset filters
+          </Button>
+        )}
       </div>
     );
   }

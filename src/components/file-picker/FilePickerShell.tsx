@@ -6,14 +6,16 @@ import {
   useIndexedResourceIds,
   useKBActions,
 } from "@/hooks";
+import { applyFilters } from "@/lib/utils/filter-files";
 import { sortFiles } from "@/lib/utils/sort-files";
 import { cn } from "@/lib/utils";
-import type { FileNode } from "@/types";
+import type { FileNode, StatusFilter, TypeFilter } from "@/types";
 import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FileTable } from "./FileTable";
+import { FilterDropdown } from "./FilterDropdown";
 
 /** Single breadcrumb segment: id for navigation, name for display */
 interface BreadcrumbSegment {
@@ -27,11 +29,32 @@ const CONTAINER_HEIGHT = "min-h-[400px] max-h-[500px]";
 type SortOrder = "asc" | "desc";
 
 const SORT_ORDER_PARAM = "sortOrder";
+const STATUS_PARAM = "status";
+const TYPE_PARAM = "type";
+
+const VALID_STATUS: StatusFilter[] = ["all", "indexed", "not-indexed"];
+const VALID_TYPE: TypeFilter[] = ["all", "folder", "file"];
+
+function parseStatus(value: string | null): StatusFilter {
+  if (value && VALID_STATUS.includes(value as StatusFilter)) {
+    return value as StatusFilter;
+  }
+  return "all";
+}
+
+function parseType(value: string | null): TypeFilter {
+  if (value && VALID_TYPE.includes(value as TypeFilter)) {
+    return value as TypeFilter;
+  }
+  return "all";
+}
 
 export function FilePickerShell() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sortOrder = (searchParams.get(SORT_ORDER_PARAM) as SortOrder) ?? "asc";
+  const statusFilter = parseStatus(searchParams.get(STATUS_PARAM));
+  const typeFilter = parseType(searchParams.get(TYPE_PARAM));
 
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(
     undefined,
@@ -40,7 +63,11 @@ export function FilePickerShell() {
   const [searchFilter, setSearchFilter] = useState("");
 
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
-  const indexedIds = useIndexedResourceIds();
+  const indexedIdsRaw = useIndexedResourceIds();
+  const indexedIds = useMemo(
+    () => new Set(indexedIdsRaw),
+    [indexedIdsRaw],
+  );
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
   const { indexNode, indexResource, deIndexResource } = useKBActions();
 
@@ -79,14 +106,55 @@ export function FilePickerShell() {
     [breadcrumbPath],
   );
 
-  const filteredResources = useMemo(() => {
-    const resources = data?.data ?? [];
-    if (!searchFilter.trim()) return resources;
-    const q = searchFilter.trim().toLowerCase();
-    return resources.filter((node) =>
-      node.name.toLowerCase().includes(q),
-    );
-  }, [data?.data, searchFilter]);
+  const filteredResources = useMemo(
+    () =>
+      applyFilters(data?.data ?? [], {
+        searchQuery: searchFilter,
+        status: statusFilter,
+        type: typeFilter,
+        indexedIds,
+      }),
+    [data?.data, searchFilter, statusFilter, typeFilter, indexedIds],
+  );
+
+  const updateUrlParams = useCallback(
+    (updates: { status?: StatusFilter; type?: TypeFilter }) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (updates.status !== undefined) {
+        if (updates.status === "all") params.delete(STATUS_PARAM);
+        else params.set(STATUS_PARAM, updates.status);
+      }
+      if (updates.type !== undefined) {
+        if (updates.type === "all") params.delete(TYPE_PARAM);
+        else params.set(TYPE_PARAM, updates.type);
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router],
+  );
+
+  const handleStatusChange = useCallback(
+    (status: StatusFilter) => updateUrlParams({ status }),
+    [updateUrlParams],
+  );
+
+  const handleTypeChange = useCallback(
+    (type: TypeFilter) => updateUrlParams({ type }),
+    [updateUrlParams],
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setSearchFilter("");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(STATUS_PARAM);
+    params.delete(TYPE_PARAM);
+    router.push(`?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
+
+  const hasActiveFilters =
+    statusFilter !== "all" ||
+    typeFilter !== "all" ||
+    searchFilter.trim() !== "";
 
   const sortedResources = useMemo(
     () => sortFiles(filteredResources, sortOrder),
@@ -172,8 +240,16 @@ export function FilePickerShell() {
         ))}
       </nav>
 
-      {/* Search & Filter row — Sort + Filter controls */}
+      {/* Search & Filter row — Filter dropdown, Sort, name search */}
       <div className="flex flex-wrap items-center gap-2">
+        <FilterDropdown
+          status={statusFilter}
+          type={typeFilter}
+          onStatusChange={handleStatusChange}
+          onTypeChange={handleTypeChange}
+          onClearFilters={handleClearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
         <input
           type="search"
           value={searchFilter}
@@ -181,7 +257,7 @@ export function FilePickerShell() {
           placeholder="Filter by name..."
           className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
-        <span className="text-xs text-muted-foreground">
+        <span className="shrink-0 text-xs text-muted-foreground">
           Sort: A–Z / Z–A (click Name header)
         </span>
       </div>
@@ -232,7 +308,7 @@ export function FilePickerShell() {
             resources={sortedResources}
             isLoading={isLoading}
             onFolderOpen={handleFolderOpen}
-            indexedIds={indexedIds}
+            indexedIds={indexedIdsRaw}
             onIndexRequest={handleIndexRequest}
             onDeIndexRequest={handleDeIndexRequest}
             isIndexPending={isIndexPending}
@@ -244,6 +320,7 @@ export function FilePickerShell() {
                 ? "No files or folders"
                 : "No files found"
             }
+            onResetFilters={hasActiveFilters ? handleClearFilters : undefined}
           />
         )}
       </div>
