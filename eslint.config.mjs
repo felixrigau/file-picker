@@ -5,6 +5,11 @@ import { defineConfig, globalIgnores } from "eslint/config";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: {
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",
