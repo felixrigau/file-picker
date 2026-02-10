@@ -35,15 +35,15 @@ export function useIndexedResourceIds(): string[] {
  * Returns the active knowledge base id (set when indexing; required for de-index).
  * Client-side only; lost on refresh.
  */
-export function useActiveKnowledgeBaseId(): string | undefined {
+export function useActiveKnowledgeBaseId(): string | null {
   const { data } = useQuery({
     queryKey: ACTIVE_KB_KEY,
-    queryFn: () => undefined as string | undefined,
-    initialData: undefined,
+    queryFn: () => null,
+    initialData: null,
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnWindowFocus: false,
   });
-  return data;
+  return data ?? null;
 }
 
 /**

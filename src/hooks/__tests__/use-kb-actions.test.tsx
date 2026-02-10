@@ -255,11 +255,11 @@ describe("useActiveKnowledgeBaseId", () => {
     queryClient.clear();
   });
 
-  it("returns undefined when no active KB in cache", () => {
+  it("returns null when no active KB in cache", () => {
     const { result } = renderHook(() => useActiveKnowledgeBaseId(), {
       wrapper: createWrapper(queryClient),
     });
-    expect(result.current).toBeUndefined();
+    expect(result.current).toBeNull();
   });
 
   it("returns cached knowledge base id when set", () => {
