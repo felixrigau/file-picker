@@ -1,6 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, type RenderHookOptions } from "@testing-library/react";
-import type { ReactNode } from "react";
+import {
+  render,
+  renderHook,
+  type RenderHookOptions,
+  type RenderOptions,
+} from "@testing-library/react";
+import type { ReactElement, ReactNode } from "react";
 
 /** Creates a fresh QueryClient for each test to avoid cache leakage. */
 export function createTestQueryClient() {
@@ -38,4 +43,27 @@ export function renderHookWithClient<Result, Props>(
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     ),
   });
+}
+
+/** Options for renderWithProviders (integration tests). */
+export interface RenderWithProvidersOptions extends Omit<RenderOptions, "wrapper"> {
+  queryClient?: QueryClient;
+}
+
+/**
+ * Renders a component with QueryClientProvider for integration tests.
+ * Mock @/app/actions/server-actions at the test file level.
+ */
+export function renderWithProviders(
+  ui: ReactElement,
+  options: RenderWithProvidersOptions = {},
+) {
+  const { queryClient = createTestQueryClient(), ...renderOptions } = options;
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+      renderOptions,
+    ),
+    queryClient,
+  };
 }
