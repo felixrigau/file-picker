@@ -29,5 +29,6 @@ export function mapStackAIResourceToFileNode(
     updatedAt: resource.updated_at ?? resource.created_at ?? "",
     isIndexed: resource.status === "indexed",
     parentId,
+    resourcePath: resource.inode_path?.path ?? undefined,
   };
 }
