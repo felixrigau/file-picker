@@ -284,6 +284,43 @@ export class StackAIService {
   }
 
   /**
+   * Recursively fetches all descendant resources with their inode paths (for cascade de-index).
+   * Includes the root resource when rootResourcePath is provided.
+   * @param resourceId - Folder or file resource id
+   * @param rootResourcePath - Path of the root resource (folder we're de-indexing), from UI
+   * @returns Array of { resourceId, resourcePath } for de-index API calls
+   */
+  async getDescendantResourcesWithPaths(
+    resourceId: string,
+    rootResourcePath: string,
+  ): Promise<{ resourceId: string; resourcePath: string }[]> {
+    const result: { resourceId: string; resourcePath: string }[] = [
+      { resourceId, resourcePath: rootResourcePath },
+    ];
+    try {
+      const response = await this.fetchGDriveContents(resourceId);
+      const children = response.data ?? [];
+
+      for (const child of children) {
+        const path = child.inode_path?.path;
+        if (path) {
+          result.push({ resourceId: child.resource_id, resourcePath: path });
+          if (child.inode_type === "directory") {
+            const childResults = await this.getDescendantResourcesWithPaths(
+              child.resource_id,
+              path,
+            );
+            result.push(...childResults.slice(1));
+          }
+        }
+      }
+    } catch {
+      // File or empty folder: only root
+    }
+    return result;
+  }
+
+  /**
    * Removes a resource from a knowledge base by path (de-indexing).
    * @param knowledgeBaseId - Id of the knowledge base (e.g. from syncToKnowledgeBase)
    * @param resourcePath - Path of the resource to remove (e.g. "papers/self_rag.pdf")
