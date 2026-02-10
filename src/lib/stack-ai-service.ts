@@ -5,7 +5,7 @@
  * Use only on the server (API routes, Server Actions, Server Components).
  * Extended docs and examples: docs/STACK_AI_GUIDE.md
  *
- * @requires NEXT_PUBLIC_STACK_AI_ANON_KEY, STACK_AI_EMAIL, STACK_AI_PASSWORD (see .env.local.example)
+ * @requires NEXT_PUBLIC_STACK_AI_ANON_KEY, STACK_AI_EMAIL, STACK_AI_PASSWORD (see .env.local)
  */
 
 import type {
@@ -72,10 +72,18 @@ export class StackAIService {
       }),
       signal: controller.signal,
     })
-      .then((res) => {
+      .then(async (res) => {
         clearTimeout(timeoutId);
         if (!res.ok) {
-          throw new Error(`Auth failed: ${res.status} ${res.statusText}`);
+          const body = await res.text();
+          let detail = "";
+          try {
+            const json = JSON.parse(body) as { message?: string; error_description?: string };
+            detail = json.message ?? json.error_description ?? body;
+          } catch {
+            detail = body || res.statusText;
+          }
+          throw new Error(`Auth failed: ${res.status} ${res.statusText}. ${detail}`);
         }
         return res.json() as Promise<StackAIAuthResponse>;
       })
@@ -90,11 +98,11 @@ export class StackAIService {
     init: RequestInit = {},
   ): Promise<T> {
     const token = await this.getAccessToken();
-    const anonKey = getEnv("NEXT_PUBLIC_STACK_AI_ANON_KEY");
 
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);
-    headers.set("Apikey", anonKey);
+    headers.set("Accept", "*/*");
+    headers.set("User-Agent", "StackAI-Client/1.0");
     if (!headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
@@ -113,7 +121,7 @@ export class StackAIService {
     if (!res.ok) {
       const text = await res.text();
       throw new Error(
-        `Stack AI API error: ${res.status} ${res.statusText} - ${text}`,
+        `Stack AI API error: ${res.status} ${res.statusText} - ${url} - ${text}`,
       );
     }
 
@@ -136,21 +144,30 @@ export class StackAIService {
 
   /**
    * Fetches the first Google Drive connection id for the authenticated user.
+   * Uses GET /v1/connections (the legacy /connections endpoint returns 404 for some orgs).
    * @returns The connection id of the first GDrive connection
    * @throws Error when auth fails, env vars are missing, no GDrive connection exists, or the API errors
    */
   async getConnectionId(): Promise<string> {
-    const url = `${BACKEND_URL}/connections?connection_provider=gdrive&limit=1`;
-    const connections = await this.request<Array<{ connection_id: string }>>(
-      "GET",
-      url,
-    );
-    if (connections.length === 0) {
+    const url = `${BACKEND_URL}/v1/connections?limit=10`;
+    const response = await this.request<
+      | Array<{ connection_id: string }>
+      | { data?: Array<{ connection_id: string }>; results?: Array<{ connection_id: string }>; items?: Array<{ connection_id: string }> }
+    >("GET", url);
+
+    const list = Array.isArray(response)
+      ? response
+      : (response as { data?: unknown[] }).data ??
+        (response as { results?: unknown[] }).results ??
+        (response as { items?: unknown[] }).items ??
+        [];
+
+    if (list.length === 0) {
       throw new Error(
-        "No Google Drive connection found. Create one in the Stack AI Workflow builder.",
+        "No Google Drive connection found. Create one in the Stack AI Workflow builder (Connections → New connection → Google Drive).",
       );
     }
-    return connections[0].connection_id;
+    return (list[0] as { connection_id: string }).connection_id;
   }
 
   /**
@@ -164,7 +181,7 @@ export class StackAIService {
     folderId?: string,
   ): Promise<PaginatedResponse<StackAIResource>> {
     const connectionId = await this.getConnectionId();
-    const baseUrl = `${BACKEND_URL}/connections/${connectionId}/resources/children`;
+    const baseUrl = `${BACKEND_URL}/v1/connections/${connectionId}/resources/children`;
     const url = folderId
       ? `${baseUrl}?${new URLSearchParams({ resource_id: folderId }).toString()}`
       : baseUrl;
