@@ -31,7 +31,7 @@ export function FilePickerShell() {
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
   const indexedIds = useIndexedResourceIds();
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
-  const { deIndexResource } = useKBActions();
+  const { indexNode, indexResource, deIndexResource } = useKBActions();
 
   const isMissingEnv =
     isError &&
@@ -84,26 +84,44 @@ export function FilePickerShell() {
     [mapsTo],
   );
 
+  const handleIndexRequest = useCallback(
+    (node: FileNode) => {
+      indexNode(node);
+    },
+    [indexNode],
+  );
+
   const handleDeIndexRequest = useCallback(
     (node: FileNode) => {
-      if (activeKnowledgeBaseId == null) return;
+      if (activeKnowledgeBaseId == null) {
+        toast.error("Index a file first to enable remove");
+        return;
+      }
       if (node.resourcePath == null) {
         toast.error("Cannot remove: missing resource path");
         return;
       }
-      deIndexResource.mutate(
-        {
-          knowledgeBaseId: activeKnowledgeBaseId,
-          resourcePath: node.resourcePath,
-          resourceId: node.id,
-        },
-        {
-          onError: (err) =>
-            toast.error(err instanceof Error ? err.message : "Failed to remove from index"),
-        },
-      );
+      deIndexResource.mutate({
+        knowledgeBaseId: activeKnowledgeBaseId,
+        resourcePath: node.resourcePath,
+        resourceId: node.id,
+      });
     },
     [activeKnowledgeBaseId, deIndexResource],
+  );
+
+  const isIndexPending = useCallback(
+    (resourceId: string) =>
+      indexResource.isPending &&
+      (indexResource.variables?.expandedIds?.includes(resourceId) ?? false),
+    [indexResource.isPending, indexResource.variables],
+  );
+
+  const isDeIndexPending = useCallback(
+    (resourceId: string) =>
+      deIndexResource.isPending &&
+      deIndexResource.variables?.resourceId === resourceId,
+    [deIndexResource.isPending, deIndexResource.variables],
   );
 
   return (
@@ -113,7 +131,7 @@ export function FilePickerShell() {
         <button
           type="button"
           onClick={() => mapsTo(undefined)}
-          className="rounded px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="rounded px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           Root
         </button>
@@ -123,7 +141,7 @@ export function FilePickerShell() {
             <button
               type="button"
               onClick={() => mapsTo(segment.id)}
-              className="rounded px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="rounded px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {segment.name}
             </button>
@@ -142,21 +160,21 @@ export function FilePickerShell() {
 
       {/* Fixed-height scrollable area — prevents CLS when data loads */}
       <div
-        className={`${CONTAINER_HEIGHT} overflow-y-auto overflow-x-auto rounded-md border border-border`}
+        className={`${CONTAINER_HEIGHT} overflow-x-auto overflow-y-auto rounded-md border border-border`}
       >
         {isMissingEnv ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 text-center text-muted-foreground">
-            <p className="font-medium">Variables de entorno no configuradas</p>
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
+            <p className="font-medium">Environment variables not configured</p>
             <p className="text-sm">
-              Copia{" "}
+              Copy{" "}
               <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                 .env.local.example
               </code>{" "}
-              a{" "}
+              to{" "}
               <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                 .env.local
               </code>{" "}
-              y rellena{" "}
+              and fill in{" "}
               <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                 NEXT_PUBLIC_STACK_AI_ANON_KEY
               </code>
@@ -164,7 +182,7 @@ export function FilePickerShell() {
               <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                 STACK_AI_EMAIL
               </code>{" "}
-              y{" "}
+              and{" "}
               <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
                 STACK_AI_PASSWORD
               </code>
@@ -172,10 +190,10 @@ export function FilePickerShell() {
             </p>
           </div>
         ) : hasGenericError ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 text-center text-muted-foreground">
-            <p className="font-medium">Error al cargar los archivos</p>
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
+            <p className="font-medium">Error loading files</p>
             <p className="text-sm">
-              {error instanceof Error ? error.message : "Error desconocido"}
+              {error instanceof Error ? error.message : "Unknown error"}
             </p>
           </div>
         ) : (
@@ -184,10 +202,10 @@ export function FilePickerShell() {
             isLoading={isLoading}
             onFolderOpen={handleFolderOpen}
             indexedIds={indexedIds}
-            onDeIndexRequest={
-              activeKnowledgeBaseId != null ? handleDeIndexRequest : undefined
-            }
-            isDeIndexPending={deIndexResource.isPending}
+            onIndexRequest={handleIndexRequest}
+            onDeIndexRequest={handleDeIndexRequest}
+            isIndexPending={isIndexPending}
+            isDeIndexPending={isDeIndexPending}
           />
         )}
       </div>
