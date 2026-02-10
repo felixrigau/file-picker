@@ -1,7 +1,7 @@
 {
-  "entryPoints": ["src/lib/stack-ai-service.ts"],
+  "entryPoints": ["src/lib/api-service.ts"],
   "out": "docs/api-reference",
-  "name": "Stack AI File Picker API",
+  "name": "File Picker API",
   "includeVersion": true,
   "exclude": ["node_modules", ".next", "types/validator.ts"],
   "skipErrorChecking": true,

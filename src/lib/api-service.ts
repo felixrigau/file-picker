@@ -1,21 +1,21 @@
 /**
- * Stack AI Service — Client for the Stack AI API and Supabase Auth.
+ * API Service — Client for the backend API and Supabase Auth.
  *
  * Singleton service for GDrive connections, knowledge bases, and sync.
  * Use only on the server (API routes, Server Actions, Server Components).
- * Extended docs and examples: docs/STACK_AI_GUIDE.md
+ * Extended docs and examples: docs/API_GUIDE.md
  *
  * @requires NEXT_PUBLIC_STACK_AI_ANON_KEY, STACK_AI_EMAIL, STACK_AI_PASSWORD (see .env.local)
  */
 
 import type {
+  ApiAuthResponse,
+  ApiOrgResponse,
+  ApiResource,
   CreateKnowledgeBasePayload,
   CreateKnowledgeBaseResponse,
   IndexingParams,
   PaginatedResponse,
-  StackAIAuthResponse,
-  StackAIOrgResponse,
-  StackAIResource,
 } from "@/types";
 
 const SUPABASE_AUTH_URL = "https://sb.stack-ai.com";
@@ -30,21 +30,21 @@ function getEnv(key: string): string {
   return value;
 }
 
-export class StackAIService {
-  private static instance: StackAIService | null = null;
+export class ApiService {
+  private static instance: ApiService | null = null;
   private tokenPromise: Promise<string> | null = null;
 
   private constructor() {}
 
   /**
    * Returns the singleton instance.
-   * @returns The single StackAIService instance
+   * @returns The single ApiService instance
    */
-  static getInstance(): StackAIService {
-    if (StackAIService.instance === null) {
-      StackAIService.instance = new StackAIService();
+  static getInstance(): ApiService {
+    if (ApiService.instance === null) {
+      ApiService.instance = new ApiService();
     }
-    return StackAIService.instance;
+    return ApiService.instance;
   }
 
   private async getAccessToken(): Promise<string> {
@@ -85,7 +85,7 @@ export class StackAIService {
           }
           throw new Error(`Auth failed: ${res.status} ${res.statusText}. ${detail}`);
         }
-        return res.json() as Promise<StackAIAuthResponse>;
+        return res.json() as Promise<ApiAuthResponse>;
       })
       .then((json) => json.access_token);
 
@@ -102,7 +102,7 @@ export class StackAIService {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);
     headers.set("Accept", "*/*");
-    headers.set("User-Agent", "StackAI-Client/1.0");
+    headers.set("User-Agent", "FilePicker-Client/1.0");
     if (!headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
@@ -121,7 +121,7 @@ export class StackAIService {
     if (!res.ok) {
       const text = await res.text();
       throw new Error(
-        `Stack AI API error: ${res.status} ${res.statusText} - ${url} - ${text}`,
+        `API error: ${res.status} ${res.statusText} - ${url} - ${text}`,
       );
     }
 
@@ -149,7 +149,7 @@ export class StackAIService {
    */
   async getOrganizationId(): Promise<string> {
     const url = `${BACKEND_URL}/organizations/me/current`;
-    const body = await this.request<StackAIOrgResponse>("GET", url);
+    const body = await this.request<ApiOrgResponse>("GET", url);
     return body.org_id;
   }
 
@@ -190,13 +190,13 @@ export class StackAIService {
    */
   async fetchGDriveContents(
     folderId?: string,
-  ): Promise<PaginatedResponse<StackAIResource>> {
+  ): Promise<PaginatedResponse<ApiResource>> {
     const connectionId = await this.getConnectionId();
     const baseUrl = `${BACKEND_URL}/v1/connections/${connectionId}/resources/children`;
     const url = folderId
       ? `${baseUrl}?${new URLSearchParams({ resource_id: folderId }).toString()}`
       : baseUrl;
-    return this.request<PaginatedResponse<StackAIResource>>("GET", url);
+    return this.request<PaginatedResponse<ApiResource>>("GET", url);
   }
 
   /**
@@ -337,10 +337,10 @@ export class StackAIService {
 }
 
 /**
- * Returns the singleton instance of the Stack AI service.
+ * Returns the singleton instance of the API service.
  * Use in API routes, Server Actions, or Server Components.
- * @returns The single StackAIService instance
+ * @returns The single ApiService instance
  */
-export function getStackAIService(): StackAIService {
-  return StackAIService.getInstance();
+export function getApiService(): ApiService {
+  return ApiService.getInstance();
 }

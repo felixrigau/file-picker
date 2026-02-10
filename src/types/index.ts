@@ -27,7 +27,7 @@ export interface ApiResponse {
   files: FileNode[];
 }
 
-// --- Stack AI API types ---
+// --- API (transport) types ---
 
 export interface InodePath {
   path: string;
@@ -35,7 +35,7 @@ export interface InodePath {
 
 export type InodeType = "directory" | "file";
 
-export interface StackAIResource {
+export interface ApiResource {
   resource_id: string;
   inode_type: InodeType;
   inode_path: InodePath;
@@ -50,15 +50,15 @@ export interface PaginatedResponse<T> {
   current_cursor: string | null;
 }
 
-export interface StackAIAuthResponse {
+export interface ApiAuthResponse {
   access_token: string;
 }
 
-export interface StackAIOrgResponse {
+export interface ApiOrgResponse {
   org_id: string;
 }
 
-export interface StackAIConnection {
+export interface ApiConnection {
   connection_id: string;
   name: string;
   created_at: string;

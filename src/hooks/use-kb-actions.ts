@@ -11,12 +11,12 @@ import {
 import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { stackAIQueryKeys } from "./query-keys";
+import { queryKeys } from "./query-keys";
 
 /** Query key for client-side indexed resource ids (optimistic + persisted). */
-const INDEXED_IDS_KEY = stackAIQueryKeys.indexedIds();
+const INDEXED_IDS_KEY = queryKeys.indexedIds();
 
-const ACTIVE_KB_KEY = stackAIQueryKeys.activeKnowledgeBaseId();
+const ACTIVE_KB_KEY = queryKeys.activeKnowledgeBaseId();
 
 /**
  * Returns the set of resource_ids currently considered indexed (for isIndexed UI).

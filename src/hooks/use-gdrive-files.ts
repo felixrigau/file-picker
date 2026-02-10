@@ -2,7 +2,7 @@
 
 import { getFilesAction } from "@/app/actions/server-actions";
 import { useQuery } from "@tanstack/react-query";
-import { stackAIQueryKeys } from "./query-keys";
+import { queryKeys } from "./query-keys";
 
 /** 1 min — data considered fresh; no refetch when re-mounting */
 const STALE_TIME_MS = 60 * 1000;
@@ -15,7 +15,7 @@ const GC_TIME_MS = 5 * 60 * 1000;
  */
 export function getGDriveQueryOptions(folderId: string | undefined) {
   return {
-    queryKey: stackAIQueryKeys.gdrive(folderId),
+    queryKey: queryKeys.gdrive(folderId),
     queryFn: () => getFilesAction(folderId),
     staleTime: STALE_TIME_MS,
     gcTime: GC_TIME_MS,
@@ -24,7 +24,7 @@ export function getGDriveQueryOptions(folderId: string | undefined) {
 
 /**
  * Fetches GDrive file/folder list for the given folder (root when folderId is omitted).
- * Uses Server Action that maps StackAIResource → FileNode at the Action level.
+ * Uses Server Action that maps ApiResource → FileNode at the Action level.
  * Stale-while-revalidate: cached data shown instantly when re-navigating.
  *
  * @param folderId - Optional resource_id to list children of; omit for root

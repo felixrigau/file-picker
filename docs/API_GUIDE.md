@@ -1,25 +1,25 @@
-# Stack AI Service — Usage Guide
+# API Service — Usage Guide
 
-Client for the Stack AI API and Supabase Auth. This guide covers setup, usage, and examples.
+Client for the backend API and Supabase Auth. This guide covers setup, usage, and examples.
 
 ## Overview
 
-The **Stack AI Service** is a singleton that centralizes calls to the Stack AI backend (GDrive connections, knowledge bases, sync). Use it only on the **server**: API routes, Server Actions, or Server Components. Do not expose `STACK_AI_EMAIL` or `STACK_AI_PASSWORD` to the client.
+The **ApiService** is a singleton that centralizes calls to the backend (GDrive connections, knowledge bases, sync). Use it only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
 
 ## Requirements
 
 Environment variables (see `.env.local.example`):
 
-- `NEXT_PUBLIC_STACK_AI_ANON_KEY` — Stack AI / Supabase anon key
-- `STACK_AI_EMAIL` — Stack AI account email (server-side only)
-- `STACK_AI_PASSWORD` — Stack AI account password (server-side only)
+- `NEXT_PUBLIC_STACK_AI_ANON_KEY` — Supabase anon key
+- `STACK_AI_EMAIL` — Account email (server-side only)
+- `STACK_AI_PASSWORD` — Account password (server-side only)
 
 ## Getting the Instance
 
 ```ts
-import { getStackAIService } from "@/lib/stack-ai-service";
+import { getApiService } from "@/lib/api-service";
 
-const service = getStackAIService();
+const service = getApiService();
 ```
 
 ## Examples
@@ -28,7 +28,7 @@ const service = getStackAIService();
 
 ```ts
 const { data } = await service.fetchGDriveContents();
-// data: { data: StackAIResource[], next_cursor, current_cursor }
+// data: { data: ApiResource[], next_cursor, current_cursor }
 ```
 
 ### Navigate to a folder (by resource_id)
@@ -59,11 +59,11 @@ Expose the service via a Route Handler so the client can call it with TanStack Q
 
 ```ts
 // app/api/drive/route.ts
-import { getStackAIService } from "@/lib/stack-ai-service";
+import { getApiService } from "@/lib/api-service";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const service = getStackAIService();
+  const service = getApiService();
   const result = await service.fetchGDriveContents(
     searchParams.get("folderId") ?? undefined
   );
@@ -73,4 +73,4 @@ export async function GET(request: Request) {
 
 ## API Reference
 
-For parameter and return types, see the generated TypeDoc output in `docs/api-reference/` (run `npx typedoc` to build).
+For parameter and return types, see the generated TypeDoc output in `docs/api-reference/` (run `npm run docs:generate` to build).

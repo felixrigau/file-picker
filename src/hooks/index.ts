@@ -4,4 +4,4 @@ export {
   useIndexedResourceIds,
   useKBActions,
 } from "./use-kb-actions";
-export { stackAIQueryKeys } from "./query-keys";
+export { queryKeys } from "./query-keys";

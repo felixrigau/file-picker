@@ -94,7 +94,7 @@ export interface RenderWithProvidersOptions extends Omit<RenderOptions, "wrapper
  * const { screen, queryClient } = renderWithProviders(<FilePickerShell />, {
  *   queryClient: createTestQueryClient(),
  * });
- * queryClient.setQueryData(stackAIQueryKeys.indexedIds(), ["file-1"]);
+ * queryClient.setQueryData(queryKeys.indexedIds(), ["file-1"]);
  * ```
  *
  * @remarks Mock `@/app/actions/server-actions` at the test file level before importing components.

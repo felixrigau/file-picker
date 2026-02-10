@@ -1,4 +1,4 @@
-import { stackAIQueryKeys } from "@/hooks/query-keys";
+import { queryKeys } from "@/hooks/query-keys";
 import {
   useActiveKnowledgeBaseId,
   useIndexedResourceIds,
@@ -67,7 +67,7 @@ describe("useKBActions", () => {
       wrapper: createWrapper(queryClient),
     });
 
-    const indexedKey = stackAIQueryKeys.indexedIds();
+    const indexedKey = queryKeys.indexedIds();
     expect(queryClient.getQueryData<string[]>(indexedKey)).toBeUndefined();
 
     await act(async () => {
@@ -102,7 +102,7 @@ describe("useKBActions", () => {
       wrapper: createWrapper(queryClient),
     });
 
-    const indexedKey = stackAIQueryKeys.indexedIds();
+    const indexedKey = queryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["existing"]);
 
     await act(async () => {
@@ -146,12 +146,12 @@ describe("useKBActions", () => {
       expect(result.current.indexResource.isSuccess).toBe(true);
     });
 
-    const kbKey = stackAIQueryKeys.activeKnowledgeBaseId();
+    const kbKey = queryKeys.activeKnowledgeBaseId();
     expect(queryClient.getQueryData<string>(kbKey)).toBe("kb-1");
   });
 
   it("deIndexResource updates indexedIds cache optimistically before API resolves", async () => {
-    const indexedKey = stackAIQueryKeys.indexedIds();
+    const indexedKey = queryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["res-1", "res-2"]);
 
     let resolveDelete: () => void;
@@ -188,7 +188,7 @@ describe("useKBActions", () => {
   });
 
   it("deIndexResource rolls back indexedIds on API error", async () => {
-    const indexedKey = stackAIQueryKeys.indexedIds();
+    const indexedKey = queryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["res-1", "res-2"]);
 
     let rejectDelete: (err: Error) => void;
@@ -273,7 +273,7 @@ describe("useActiveKnowledgeBaseId", () => {
   });
 
   it("returns cached knowledge base id when set", () => {
-    const kbKey = stackAIQueryKeys.activeKnowledgeBaseId();
+    const kbKey = queryKeys.activeKnowledgeBaseId();
     queryClient.setQueryData(kbKey, "kb-123");
 
     const { result } = renderHook(() => useActiveKnowledgeBaseId(), {

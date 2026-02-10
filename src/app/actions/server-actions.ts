@@ -1,7 +1,7 @@
 "use server";
 
-import { mapStackAIResourceToFileNode } from "@/lib/stack-ai-mappers";
-import { getStackAIService } from "@/lib/stack-ai-service";
+import { mapResourceToFileNode } from "@/lib/api-mappers";
+import { getApiService } from "@/lib/api-service";
 import type {
   FileNode,
   IndexingParams,
@@ -11,9 +11,9 @@ import type {
 export async function getFilesAction(
   folderId?: string,
 ): Promise<PaginatedResponse<FileNode>> {
-  const response = await getStackAIService().fetchGDriveContents(folderId);
+  const response = await getApiService().fetchGDriveContents(folderId);
   const data: FileNode[] = response.data.map((r) =>
-    mapStackAIResourceToFileNode(r, folderId),
+    mapResourceToFileNode(r, folderId),
   );
   return {
     data,
@@ -25,7 +25,7 @@ export async function getFilesAction(
 export async function getConnectionIdAction(): Promise<{
   connectionId: string;
 }> {
-  const connectionId = await getStackAIService().getConnectionId();
+  const connectionId = await getApiService().getConnectionId();
   return { connectionId };
 }
 
@@ -34,7 +34,7 @@ export async function syncToKnowledgeBaseAction(
   resourceIds: string[],
   indexingParams?: Partial<IndexingParams>,
 ): Promise<{ knowledge_base_id: string }> {
-  return getStackAIService().syncToKnowledgeBase(
+  return getApiService().syncToKnowledgeBase(
     connectionId,
     resourceIds,
     indexingParams,
@@ -44,14 +44,14 @@ export async function syncToKnowledgeBaseAction(
 export async function getDescendantResourceIdsAction(
   resourceId: string,
 ): Promise<string[]> {
-  return getStackAIService().getDescendantResourceIds(resourceId);
+  return getApiService().getDescendantResourceIds(resourceId);
 }
 
 export async function getDescendantResourcesWithPathsAction(
   resourceId: string,
   rootResourcePath: string,
 ): Promise<{ resourceId: string; resourcePath: string }[]> {
-  return getStackAIService().getDescendantResourcesWithPaths(
+  return getApiService().getDescendantResourcesWithPaths(
     resourceId,
     rootResourcePath,
   );
@@ -61,7 +61,7 @@ export async function deleteFromKnowledgeBaseAction(
   knowledgeBaseId: string,
   resourcePath: string,
 ): Promise<void> {
-  await getStackAIService().deleteFromKnowledgeBase(
+  await getApiService().deleteFromKnowledgeBase(
     knowledgeBaseId,
     resourcePath,
   );
@@ -75,7 +75,7 @@ export async function deleteFromKnowledgeBaseBatchAction(
   let errorCount = 0;
   for (const { resourcePath: path } of items) {
     try {
-      await getStackAIService().deleteFromKnowledgeBase(
+      await getApiService().deleteFromKnowledgeBase(
         knowledgeBaseId,
         path,
       );

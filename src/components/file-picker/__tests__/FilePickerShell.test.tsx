@@ -1,6 +1,6 @@
 import { FilePickerShell } from "../FilePickerShell";
 import { createTestQueryClient, renderWithProviders } from "@/test/test-utils";
-import { stackAIQueryKeys } from "@/hooks/query-keys";
+import { queryKeys } from "@/hooks/query-keys";
 import type { FileNode, PaginatedResponse } from "@/types";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -417,10 +417,10 @@ describe("FilePickerShell", () => {
 
       const queryClient = createTestQueryClient();
       queryClient.setQueryData(
-        stackAIQueryKeys.activeKnowledgeBaseId(),
+        queryKeys.activeKnowledgeBaseId(),
         "kb-1",
       );
-      queryClient.setQueryData(stackAIQueryKeys.indexedIds(), ["file-1"]);
+      queryClient.setQueryData(queryKeys.indexedIds(), ["file-1"]);
 
       renderWithProviders(<FilePickerShell />, { queryClient });
 
@@ -515,10 +515,10 @@ describe("FilePickerShell", () => {
 
       const queryClient = createTestQueryClient();
       queryClient.setQueryData(
-        stackAIQueryKeys.activeKnowledgeBaseId(),
+        queryKeys.activeKnowledgeBaseId(),
         "kb-1",
       );
-      queryClient.setQueryData(stackAIQueryKeys.indexedIds(), [
+      queryClient.setQueryData(queryKeys.indexedIds(), [
         "folder-1",
         "file-1",
       ]);

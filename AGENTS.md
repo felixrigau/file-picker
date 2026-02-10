@@ -6,7 +6,7 @@
 - **SRP (Single Responsibility):** - UI Components: Pure presentation + event emission.
   - Logic Helpers: Pure functions for sorting/filtering.
   - Smart Hooks: Orchestrate Server State (TanStack Query).
-- **Domain vs Transport:** API types (StackAIResource) must be mapped to UI models (FileNode) at the Action or Hook level.
+- **Domain vs Transport:** API types (ApiResource) must be mapped to UI models (FileNode) at the Action or Hook level.
 
 ## 💻 Tech Stack & Boundaries
 
@@ -41,9 +41,9 @@ Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle si
 
 ## 📂 Project Map
 
-- `@/app/actions/`: Entry point for Server-side logic (Wraps `StackAIService`).
+- `@/app/actions/`: Entry point for Server-side logic (Wraps `ApiService`).
 - `@/hooks/`: Modular hooks (e.g., `use-gdrive-files.ts`). Exported from `index.ts`.
-- `@/lib/`: Singleton services & business logic (e.g., `stack-ai-service.ts`).
+- `@/lib/`: Singleton services & business logic (e.g., `api-service.ts`).
 - `@/types/`: Centralized domain types (Avoid `any`).
 
 ## 🧪 Testing Protocol

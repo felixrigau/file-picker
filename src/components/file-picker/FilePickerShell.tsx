@@ -7,7 +7,7 @@ import {
   useKBActions,
 } from "@/hooks";
 import { getGDriveQueryOptions } from "@/hooks/use-gdrive-files";
-import { stackAIQueryKeys } from "@/hooks/query-keys";
+import { queryKeys } from "@/hooks/query-keys";
 import { cn } from "@/lib/utils";
 import { applyFilters } from "@/lib/utils/filter-files";
 import { sortFiles } from "@/lib/utils/sort-files";
@@ -215,7 +215,7 @@ export function FilePickerShell() {
 
     for (const id of toFetch) {
       const cached = queryClient.getQueryData<{ data: FileNode[] }>(
-        stackAIQueryKeys.gdrive(id),
+        queryKeys.gdrive(id),
       );
       if (cached?.data) {
         results.push({ id, data: cached.data });
@@ -335,7 +335,7 @@ export function FilePickerShell() {
       cancelTimerRef.current = setTimeout(() => {
         cancelTimerRef.current = null;
         if (expandedIdsRef.current.has(folderId)) return;
-        queryClient.cancelQueries({ queryKey: stackAIQueryKeys.gdrive(folderId) });
+        queryClient.cancelQueries({ queryKey: queryKeys.gdrive(folderId) });
       }, PREFETCH_CANCEL_DEBOUNCE_MS);
     },
     [queryClient],
