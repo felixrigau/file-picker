@@ -15,6 +15,10 @@
 - **UI:** Tailwind CSS, Shadcn UI, Lucide Icons.
 - **Testing:** Vitest + RTL. Mock `@/app/actions/server-actions` for hook tests.
 
+## React/Next.js Performance
+
+Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle size, re-renders, and server/client patterns. 57 rules across 8 categories, prioritized by impact.
+
 ## 🛠️ Implementation Rules
 
 ### 1. React & Rendering
