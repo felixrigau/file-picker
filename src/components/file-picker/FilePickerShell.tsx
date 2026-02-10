@@ -73,6 +73,7 @@ export function FilePickerShell() {
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoveredFolderIdRef = useRef<string | null>(null);
+  const expandedIdsRef = useRef<Set<string>>(expandedIds);
 
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
   const indexedIdsRaw = useIndexedResourceIds();
@@ -192,6 +193,10 @@ export function FilePickerShell() {
   }, []);
 
   useEffect(() => {
+    expandedIdsRef.current = expandedIds;
+  }, [expandedIds]);
+
+  useEffect(() => {
     const toFetch = [...expandedIds].filter((id) => !childData.has(id));
     if (toFetch.length === 0) return;
 
@@ -224,14 +229,21 @@ export function FilePickerShell() {
     if (idsToFetch.length === 0) return;
 
     let cancelled = false;
-    Promise.all(
+    Promise.allSettled(
       idsToFetch.map((id) =>
         queryClient
           .fetchQuery(getGDriveQueryOptions(id))
           .then((r) => ({ id, data: r.data })),
       ),
-    ).then((fetchedResults) => {
+    ).then((settledResults) => {
       if (cancelled) return;
+      const fetchedResults = settledResults
+        .filter(
+          (r): r is PromiseFulfilledResult<{ id: string; data: FileNode[] }> =>
+            r.status === "fulfilled",
+        )
+        .map((r) => r.value);
+      if (fetchedResults.length === 0) return;
       setChildData((prev) => {
         const next = new Map(prev);
         for (const { id, data } of fetchedResults) {
@@ -312,6 +324,7 @@ export function FilePickerShell() {
 
       cancelTimerRef.current = setTimeout(() => {
         cancelTimerRef.current = null;
+        if (expandedIdsRef.current.has(folderId)) return;
         queryClient.cancelQueries({ queryKey: stackAIQueryKeys.gdrive(folderId) });
       }, PREFETCH_CANCEL_DEBOUNCE_MS);
     },

@@ -60,14 +60,15 @@ const nameCellClasses = {
 
 const SKELETON_ROW_COUNT = 6;
 
-const FILE_ICON_MAP: Record<string, { Icon: typeof File; colorClass: string }> = {
-  pdf: { Icon: FileText, colorClass: "text-red-500" },
-  csv: { Icon: Table, colorClass: "text-green-600" },
-  txt: { Icon: FileText, colorClass: "text-sky-500" },
-  ds_store: { Icon: File, colorClass: "text-muted-foreground" },
-} as const;
+const FILE_ICON_MAP: Record<string, { Icon: typeof File; colorClass: string }> =
+  {
+    pdf: { Icon: FileText, colorClass: "text-red-500" },
+    csv: { Icon: Table, colorClass: "text-green-600" },
+    txt: { Icon: FileText, colorClass: "text-sky-500" },
+    ds_store: { Icon: File, colorClass: "text-muted-foreground" },
+  } as const;
 
-const ROW_CONTENT_HEIGHT = "min-h-10";
+const ROW_CONTENT_HEIGHT = "min-h-8";
 
 function FileIcon({ type, name }: { type: "file" | "folder"; name: string }) {
   if (type === "folder") {
@@ -78,7 +79,10 @@ function FileIcon({ type, name }: { type: "file" | "folder"; name: string }) {
     );
   }
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
-  const config = FILE_ICON_MAP[ext] ?? { Icon: File, colorClass: "text-muted-foreground" };
+  const config = FILE_ICON_MAP[ext] ?? {
+    Icon: File,
+    colorClass: "text-muted-foreground",
+  };
   const { Icon, colorClass } = config;
   return (
     <span aria-hidden className={cn("shrink-0", colorClass)}>
@@ -119,9 +123,7 @@ const FileRow = memo(function FileRow({
   const isIndexed = node.isIndexed || indexedIds.has(node.id);
   const canIndex = Boolean(onIndexRequest) && !isIndexed;
   const canDeIndex =
-    Boolean(onDeIndexRequest) &&
-    isIndexed &&
-    Boolean(node.resourcePath);
+    Boolean(onDeIndexRequest) && isIndexed && Boolean(node.resourcePath);
   const isExpanded = isFolder && expandedIds?.has(node.id);
   const indexPending = isIndexPending?.(node.id) ?? false;
   const deIndexPending = isDeIndexPending?.(node.id) ?? false;
@@ -144,7 +146,9 @@ const FileRow = memo(function FileRow({
   return (
     <tr className="border-b border-border/50 transition-colors hover:bg-muted/50">
       <td className="w-8 shrink-0 px-1 py-2">
-        <span className={cn("flex items-center justify-center", ROW_CONTENT_HEIGHT)}>
+        <span
+          className={cn("flex items-center justify-center", ROW_CONTENT_HEIGHT)}
+        >
           <Checkbox
             checked={isSelected}
             onCheckedChange={handleCheckboxChange}
@@ -217,7 +221,9 @@ const FileRow = memo(function FileRow({
         </span>
       </td>
       <td className="w-24 px-4 py-2 text-right">
-        <span className={cn("flex items-center justify-end", ROW_CONTENT_HEIGHT)}>
+        <span
+          className={cn("flex items-center justify-end", ROW_CONTENT_HEIGHT)}
+        >
           {canIndex ? (
             <Button
               variant="ghost"
@@ -251,7 +257,7 @@ function SkeletonRow({ depth }: { depth: number }) {
   return (
     <tr className="border-b border-border/50">
       <td className="w-8 shrink-0 px-1 py-2">
-        <Skeleton className="h-10 w-4" />
+        <Skeleton className="h-8 w-4" />
       </td>
       <td className="px-4 py-2">
         <div
@@ -259,14 +265,14 @@ function SkeletonRow({ depth }: { depth: number }) {
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
           <span className="w-5 shrink-0" aria-hidden />
-          <Skeleton className="h-10 w-full max-w-48" />
+          <Skeleton className="h-8 w-full max-w-48" />
         </div>
       </td>
       <td className="w-28 min-w-28 px-4 py-2">
-        <Skeleton className="h-10 w-20" />
+        <Skeleton className="h-8 w-20" />
       </td>
       <td className="w-24 px-4 py-2">
-        <Skeleton className="h-10 w-16" />
+        <Skeleton className="h-8 w-16" />
       </td>
     </tr>
   );
@@ -301,7 +307,9 @@ export function FileTable({
           <tr className="border-b border-border">
             <th className="w-8 shrink-0 px-1 py-2" aria-hidden />
             <th className="px-4 py-2 text-left font-medium">Name</th>
-            <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">Status</th>
+            <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">
+              Status
+            </th>
             <th className="w-24 px-4 py-2" aria-hidden />
           </tr>
         </thead>
@@ -309,16 +317,16 @@ export function FileTable({
           {Array.from({ length: SKELETON_ROW_COUNT }).map((_, i) => (
             <tr key={`skeleton-${i}`} className="border-b border-border/50">
               <td className="px-2 py-2">
-                <Skeleton className="h-10 w-4" />
+                <Skeleton className="h-4 w-4" />
               </td>
               <td className="px-4 py-2">
-                <Skeleton className="h-10 w-full max-w-48" />
+                <Skeleton className="h-6 w-full max-w-46" />
               </td>
               <td className="px-4 py-2">
-                <Skeleton className="h-10 w-20" />
+                <Skeleton className="h-6 w-20" />
               </td>
               <td className="px-4 py-2">
-                <Skeleton className="h-10 w-16" />
+                <Skeleton className="h-6 w-16" />
               </td>
             </tr>
           ))}
@@ -364,7 +372,9 @@ export function FileTable({
               "Name"
             )}
           </th>
-          <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">Status</th>
+          <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">
+            Status
+          </th>
           <th className="w-24 px-4 py-2 text-right font-medium">Actions</th>
         </tr>
       </thead>
@@ -387,7 +397,10 @@ export function FileTable({
               isDeIndexPending={isDeIndexPending}
             />
           ) : (
-            <SkeletonRow key={`skeleton-${row.folderId}-${row.index}`} depth={row.depth} />
+            <SkeletonRow
+              key={`skeleton-${row.folderId}-${row.index}`}
+              depth={row.depth}
+            />
           ),
         )}
       </tbody>
