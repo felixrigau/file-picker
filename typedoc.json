@@ -1,0 +1,9 @@
+{
+  "entryPoints": ["src/lib/stack-ai-service.ts"],
+  "out": "docs/api-reference",
+  "name": "Stack AI File Picker API",
+  "includeVersion": true,
+  "exclude": ["node_modules", ".next", "types/validator.ts"],
+  "skipErrorChecking": true,
+  "tsconfig": "tsconfig.json"
+}
