@@ -2,11 +2,8 @@
 module.exports = {
   ci: {
     collect: {
-      url: ["http://localhost:3000"],
+      url: ["https://file-picker-smoky.vercel.app/"],
       numberOfRuns: 3,
-      startServerCommand: "npm run serve:lhci",
-      startServerReadyPattern: "Ready|started|Listening",
-      startServerReadyTimeout: 60000,
     },
     assert: {
       assertions: {
