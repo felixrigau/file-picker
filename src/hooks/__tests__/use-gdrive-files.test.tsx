@@ -5,11 +5,11 @@ import { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/app/actions/stack-ai-actions", () => ({
+vi.mock("@/app/actions/server-actions", () => ({
   getFilesAction: vi.fn(),
 }));
 
-const { getFilesAction } = await import("@/app/actions/stack-ai-actions");
+const { getFilesAction } = await import("@/app/actions/server-actions");
 
 const mockPaginated = (
   data: StackAIResource[],

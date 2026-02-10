@@ -5,13 +5,13 @@ import { QueryClient } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/app/actions/stack-ai-actions", () => ({
+vi.mock("@/app/actions/server-actions", () => ({
   getConnectionIdAction: vi.fn(),
   syncToKnowledgeBaseAction: vi.fn(),
   deleteFromKnowledgeBaseAction: vi.fn(),
 }));
 
-const actions = await import("@/app/actions/stack-ai-actions");
+const actions = await import("@/app/actions/server-actions");
 
 describe("useKBActions", () => {
   let queryClient: QueryClient;

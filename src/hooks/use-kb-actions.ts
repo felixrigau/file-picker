@@ -1,11 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  deleteFromKnowledgeBaseAction,
   getConnectionIdAction,
   syncToKnowledgeBaseAction,
-  deleteFromKnowledgeBaseAction,
-} from "@/app/actions/stack-ai-actions";
+} from "@/app/actions/server-actions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { stackAIQueryKeys } from "./query-keys";
 
 /** Query key for client-side indexed resource ids (optimistic + persisted). */
@@ -54,7 +54,9 @@ export function useKBActions() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: stackAIQueryKeys.gdrive(undefined) });
+      queryClient.invalidateQueries({
+        queryKey: stackAIQueryKeys.gdrive(undefined),
+      });
     },
   });
 
@@ -65,17 +67,14 @@ export function useKBActions() {
   };
 
   const deIndexResource = useMutation({
-    mutationFn: async ({
-      knowledgeBaseId,
-      resourcePath,
-    }: DeIndexVariables) =>
+    mutationFn: async ({ knowledgeBaseId, resourcePath }: DeIndexVariables) =>
       deleteFromKnowledgeBaseAction(knowledgeBaseId, resourcePath),
     onMutate: async ({ resourceId }: DeIndexVariables) => {
       await queryClient.cancelQueries({ queryKey: INDEXED_IDS_KEY });
       const previous = queryClient.getQueryData<string[]>(INDEXED_IDS_KEY);
       if (resourceId != null) {
         queryClient.setQueryData<string[]>(INDEXED_IDS_KEY, (old) =>
-          (old ?? []).filter((id) => id !== resourceId)
+          (old ?? []).filter((id) => id !== resourceId),
         );
       }
       return { previous };
@@ -86,7 +85,9 @@ export function useKBActions() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: stackAIQueryKeys.gdrive(undefined) });
+      queryClient.invalidateQueries({
+        queryKey: stackAIQueryKeys.gdrive(undefined),
+      });
     },
   });
 

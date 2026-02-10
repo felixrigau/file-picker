@@ -1,7 +1,7 @@
 "use client";
 
+import { getFilesAction } from "@/app/actions/server-actions";
 import { useQuery } from "@tanstack/react-query";
-import { getFilesAction } from "@/app/actions/stack-ai-actions";
 import { stackAIQueryKeys } from "./query-keys";
 
 /**
