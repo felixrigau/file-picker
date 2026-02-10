@@ -15,7 +15,14 @@ import type { FileNode, StatusFilter, TypeFilter } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import type { DisplayRow } from "./FileTable";
 import { FileTable } from "./FileTable";
@@ -27,8 +34,8 @@ interface BreadcrumbSegment {
   name: string;
 }
 
-/** Fixed height for the file list container to prevent CLS when data loads */
-const CONTAINER_HEIGHT = "min-h-[400px] max-h-[500px]";
+/** Fixed shell height (80vh) to prevent layout jumps when content changes */
+const SHELL_HEIGHT = "h-[80vh]";
 
 type SortOrder = "asc" | "desc";
 
@@ -381,9 +388,17 @@ export function FilePickerShell() {
   );
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+    <div
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border border-border bg-card p-4",
+        SHELL_HEIGHT,
+      )}
+    >
       {/* Breadcrumbs */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex shrink-0 items-center gap-2 text-sm"
+      >
         <button
           type="button"
           onClick={() => mapsTo(undefined)}
@@ -405,32 +420,29 @@ export function FilePickerShell() {
         ))}
       </nav>
 
-      {/* Search & Filter row — Pill filters, name search */}
-      <div className="flex flex-wrap items-center gap-2">
-        <FilterPills
-          status={statusFilter}
-          type={typeFilter}
-          onStatusChange={handleStatusChange}
-          onTypeChange={handleTypeChange}
-          onClearFilters={handleClearFilters}
-          hasActiveFilters={hasActiveFilters}
-        />
+      {/* Search & Filter row — Pill filters (left, grow), search (right, 40%) */}
+      <div className="flex shrink-0 items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <FilterPills
+            status={statusFilter}
+            type={typeFilter}
+            onStatusChange={handleStatusChange}
+            onTypeChange={handleTypeChange}
+            onClearFilters={handleClearFilters}
+            hasActiveFilters={hasActiveFilters}
+          />
+        </div>
         <input
           type="search"
           value={searchFilter}
           onChange={(e) => setSearchFilter(e.target.value)}
           placeholder="Search by..."
-          className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="w-2/5 min-w-32 shrink-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
       </div>
 
-      {/* Fixed-height scrollable area — prevents CLS when data loads */}
-      <div
-        className={cn(
-          CONTAINER_HEIGHT,
-          "relative flex flex-col overflow-hidden rounded-md border border-border",
-        )}
-      >
+      {/* Scrollable area — fills remaining height, prevents CLS when content changes */}
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
           {isMissingEnv ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">

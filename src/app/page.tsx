@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 function FilePickerFallback() {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 min-h-[400px]" />
+    <div className="h-[80vh] flex flex-col gap-3 rounded-lg border border-border bg-card p-4" />
   );
 }
 

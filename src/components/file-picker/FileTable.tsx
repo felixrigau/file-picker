@@ -68,6 +68,10 @@ const FILE_ICON_MAP: Record<string, { Icon: typeof File; colorClass: string }> =
 
 const ROW_CONTENT_HEIGHT = "min-h-8";
 
+/** Fixed widths for Status and Actions to prevent column shift when content changes */
+const STATUS_COL_WIDTH = "w-[7rem] min-w-[7rem]";
+const ACTIONS_COL_WIDTH = "w-[6.5rem] min-w-[6.5rem]";
+
 function FileIcon({ type, name }: { type: "file" | "folder"; name: string }) {
   if (type === "folder") {
     return (
@@ -177,17 +181,9 @@ const FileRow = memo(function FileRow({
           )}
         </div>
       </td>
-      <td className="w-28 min-w-28 px-4 py-2">
+      <td className={cn(STATUS_COL_WIDTH, "px-4 py-2")}>
         <span className={cn("inline-flex items-center", ROW_CONTENT_HEIGHT)}>
-          {indexPending ? (
-            <Badge variant="secondary" className="rounded-md">
-              Indexing...
-            </Badge>
-          ) : deIndexPending ? (
-            <Badge variant="secondary" className="rounded-md">
-              Removing...
-            </Badge>
-          ) : isIndexed ? (
+          {isIndexed ? (
             <Badge className="rounded-md bg-green-600/15 text-green-700 hover:bg-green-600/25 dark:bg-green-500/15 dark:text-green-400">
               Indexed
             </Badge>
@@ -198,7 +194,7 @@ const FileRow = memo(function FileRow({
           )}
         </span>
       </td>
-      <td className="w-24 px-4 py-2 text-right">
+      <td className={cn(ACTIONS_COL_WIDTH, "px-4 py-2 text-right")}>
         <span
           className={cn("flex items-center justify-end", ROW_CONTENT_HEIGHT)}
         >
@@ -251,10 +247,10 @@ function SkeletonRow({ depth }: { depth: number }) {
           <Skeleton className="h-8 w-full max-w-48" />
         </div>
       </td>
-      <td className="w-28 min-w-28 px-4 py-2">
+      <td className={cn(STATUS_COL_WIDTH, "px-4 py-2")}>
         <Skeleton className="h-8 w-20" />
       </td>
-      <td className="w-24 px-4 py-2">
+      <td className={cn(ACTIONS_COL_WIDTH, "px-4 py-2")}>
         <Skeleton className="h-8 w-16" />
       </td>
     </tr>
@@ -276,21 +272,26 @@ export function FileTable({
   onFolderHover,
   onFolderHoverCancel,
   onFolderToggle,
-  expandedIds,
+  expandedIds = new Set(),
 }: FileTableProps) {
   const indexedSet = new Set(indexedIds);
   const SortIcon = sortOrder === "asc" ? ArrowUp : ArrowDown;
 
   if (isLoading) {
     return (
-      <table className="w-full text-sm">
+      <table className="w-full table-fixed text-sm">
         <thead>
           <tr className="border-b border-border">
             <th className="px-4 py-2 text-left font-medium">Name</th>
-            <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">
+            <th
+              className={cn(
+                STATUS_COL_WIDTH,
+                "px-4 py-2 text-left font-medium",
+              )}
+            >
               Status
             </th>
-            <th className="w-24 px-4 py-2" aria-hidden />
+            <th className={cn(ACTIONS_COL_WIDTH, "px-4 py-2")} aria-hidden />
           </tr>
         </thead>
         <tbody>
@@ -299,10 +300,10 @@ export function FileTable({
               <td className="px-4 py-2">
                 <Skeleton className="h-8 w-full max-w-48" />
               </td>
-              <td className="px-4 py-2">
+              <td className={cn(STATUS_COL_WIDTH, "px-4 py-2")}>
                 <Skeleton className="h-8 w-20" />
               </td>
-              <td className="px-4 py-2">
+              <td className={cn(ACTIONS_COL_WIDTH, "px-4 py-2")}>
                 <Skeleton className="h-8 w-16" />
               </td>
             </tr>
@@ -326,7 +327,7 @@ export function FileTable({
   }
 
   return (
-    <table className="w-full text-sm">
+    <table className="w-full table-fixed text-sm">
       <thead>
         <tr className="border-b border-border">
           <th
@@ -348,10 +349,22 @@ export function FileTable({
               "Name"
             )}
           </th>
-          <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">
+          <th
+            className={cn(
+              STATUS_COL_WIDTH,
+              "px-4 py-2 text-left font-medium",
+            )}
+          >
             Status
           </th>
-          <th className="w-24 px-4 py-2 text-right font-medium">Actions</th>
+          <th
+            className={cn(
+              ACTIONS_COL_WIDTH,
+              "px-4 py-2 text-right font-medium",
+            )}
+          >
+            Actions
+          </th>
         </tr>
       </thead>
       <tbody>
