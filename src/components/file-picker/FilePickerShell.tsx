@@ -6,8 +6,11 @@ import {
   useIndexedResourceIds,
   useKBActions,
 } from "@/hooks";
+import { sortFiles } from "@/lib/utils/sort-files";
+import { cn } from "@/lib/utils";
 import type { FileNode } from "@/types";
 import { ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FileTable } from "./FileTable";
@@ -21,7 +24,15 @@ interface BreadcrumbSegment {
 /** Fixed height for the file list container to prevent CLS when data loads */
 const CONTAINER_HEIGHT = "min-h-[400px] max-h-[500px]";
 
+type SortOrder = "asc" | "desc";
+
+const SORT_ORDER_PARAM = "sortOrder";
+
 export function FilePickerShell() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const sortOrder = (searchParams.get(SORT_ORDER_PARAM) as SortOrder) ?? "asc";
+
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(
     undefined,
   );
@@ -76,6 +87,18 @@ export function FilePickerShell() {
       node.name.toLowerCase().includes(q),
     );
   }, [data?.data, searchFilter]);
+
+  const sortedResources = useMemo(
+    () => sortFiles(filteredResources, sortOrder),
+    [filteredResources, sortOrder],
+  );
+
+  const handleSortToggle = useCallback(() => {
+    const next = sortOrder === "asc" ? "desc" : "asc";
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(SORT_ORDER_PARAM, next);
+    router.push(`?${params.toString()}`, { scroll: false });
+  }, [sortOrder, searchParams, router]);
 
   const handleFolderOpen = useCallback(
     (id: string, name: string) => {
@@ -149,18 +172,26 @@ export function FilePickerShell() {
         ))}
       </nav>
 
-      {/* Search (optional filter; cleared by mapsTo) */}
-      <input
-        type="search"
-        value={searchFilter}
-        onChange={(e) => setSearchFilter(e.target.value)}
-        placeholder="Filter by name..."
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      />
+      {/* Search & Filter row — Sort + Filter controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={searchFilter}
+          onChange={(e) => setSearchFilter(e.target.value)}
+          placeholder="Filter by name..."
+          className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        />
+        <span className="text-xs text-muted-foreground">
+          Sort: A–Z / Z–A (click Name header)
+        </span>
+      </div>
 
       {/* Fixed-height scrollable area — prevents CLS when data loads */}
       <div
-        className={`${CONTAINER_HEIGHT} overflow-x-auto overflow-y-auto rounded-md border border-border`}
+        className={cn(
+          CONTAINER_HEIGHT,
+          "overflow-x-auto overflow-y-auto rounded-md border border-border",
+        )}
       >
         {isMissingEnv ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
@@ -198,7 +229,7 @@ export function FilePickerShell() {
           </div>
         ) : (
           <FileTable
-            resources={filteredResources}
+            resources={sortedResources}
             isLoading={isLoading}
             onFolderOpen={handleFolderOpen}
             indexedIds={indexedIds}
@@ -206,6 +237,13 @@ export function FilePickerShell() {
             onDeIndexRequest={handleDeIndexRequest}
             isIndexPending={isIndexPending}
             isDeIndexPending={isDeIndexPending}
+            sortOrder={sortOrder}
+            onSortToggle={handleSortToggle}
+            emptyMessage={
+              (data?.data?.length ?? 0) === 0
+                ? "No files or folders"
+                : "No files found"
+            }
           />
         )}
       </div>
