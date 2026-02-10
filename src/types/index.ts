@@ -7,6 +7,8 @@ export interface FileNode {
   size?: number;
   isIndexed: boolean;
   parentId?: string;
+  /** Path for de-index API (from inode_path.path) */
+  resourcePath?: string;
 }
 
 export interface ApiResponse {
