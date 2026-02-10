@@ -11,6 +11,8 @@ import { stackAIQueryKeys } from "./query-keys";
 /** Query key for client-side indexed resource ids (optimistic + persisted). */
 const INDEXED_IDS_KEY = stackAIQueryKeys.indexedIds();
 
+const ACTIVE_KB_KEY = stackAIQueryKeys.activeKnowledgeBaseId();
+
 /**
  * Returns the set of resource_ids currently considered indexed (for isIndexed UI).
  * Updated optimistically by indexResource / deIndexResource.
@@ -24,6 +26,21 @@ export function useIndexedResourceIds(): string[] {
     refetchOnWindowFocus: false,
   });
   return data ?? [];
+}
+
+/**
+ * Returns the active knowledge base id (set when indexing; required for de-index).
+ * Client-side only; lost on refresh.
+ */
+export function useActiveKnowledgeBaseId(): string | undefined {
+  const { data } = useQuery({
+    queryKey: ACTIVE_KB_KEY,
+    queryFn: () => undefined as string | undefined,
+    initialData: undefined,
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnWindowFocus: false,
+  });
+  return data;
 }
 
 /**
@@ -52,6 +69,9 @@ export function useKBActions() {
       if (context?.previous != null) {
         queryClient.setQueryData(INDEXED_IDS_KEY, context.previous);
       }
+    },
+    onSuccess: (result) => {
+      queryClient.setQueryData(ACTIVE_KB_KEY, result.knowledge_base_id);
     },
     onSettled: () => {
       queryClient.invalidateQueries({
