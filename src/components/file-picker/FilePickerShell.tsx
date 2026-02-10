@@ -219,22 +219,24 @@ export function FilePickerShell() {
 
   const displayedResources = useMemo((): DisplayRow[] => {
     const rows: DisplayRow[] = [];
-    for (const node of sortedResources) {
-      rows.push({ type: "resource", node, depth: 0 });
-      if (node.type === "folder" && expandedIds.has(node.id)) {
-        const children = childData.get(node.id);
-        if (children) {
-          const sortedChildren = sortFiles(children, sortOrder);
-          for (const child of sortedChildren) {
-            rows.push({ type: "resource", node: child, depth: 1 });
-          }
-        } else {
-          for (let i = 0; i < 3; i++) {
-            rows.push({ type: "skeleton", folderId: node.id, depth: 1, index: i });
+
+    function addNodes(nodes: FileNode[], depth: number) {
+      for (const node of nodes) {
+        rows.push({ type: "resource", node, depth });
+        if (node.type === "folder" && expandedIds.has(node.id)) {
+          const children = childData.get(node.id);
+          if (children) {
+            addNodes(sortFiles(children, sortOrder), depth + 1);
+          } else {
+            for (let i = 0; i < 3; i++) {
+              rows.push({ type: "skeleton", folderId: node.id, depth: depth + 1, index: i });
+            }
           }
         }
       }
     }
+
+    addNodes(sortedResources, 0);
     return rows;
   }, [sortedResources, expandedIds, childData, sortOrder]);
 
@@ -246,13 +248,6 @@ export function FilePickerShell() {
       router.push(`?${params.toString()}`, { scroll: false });
     });
   }, [sortOrder, searchParams, router]);
-
-  const handleFolderOpen = useCallback(
-    (id: string, name: string) => {
-      mapsTo(id, name);
-    },
-    [mapsTo],
-  );
 
   /** Delay before prefetch to avoid requests when cursor is just passing through */
   const PREFETCH_DELAY_MS = 200;
@@ -411,7 +406,6 @@ export function FilePickerShell() {
           <FileTable
             resources={displayedResources}
             isLoading={isLoading}
-            onFolderOpen={handleFolderOpen}
             onFolderHover={handleFolderHover}
             onFolderHoverCancel={handleFolderHoverCancel}
             onFolderToggle={handleFolderToggle}

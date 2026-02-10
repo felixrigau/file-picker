@@ -36,7 +36,6 @@ export type DisplayRow =
 interface FileTableProps {
   resources: DisplayRow[];
   isLoading: boolean;
-  onFolderOpen: (id: string, name: string) => void;
   onFolderHover?: (folderId: string) => void;
   onFolderHoverCancel?: (folderId: string) => void;
   onFolderToggle?: (folderId: string) => void;
@@ -93,7 +92,6 @@ const FileRow = memo(function FileRow({
   indexedIds,
   expandedIds,
   selectedIds,
-  onFolderOpen,
   onFolderHover,
   onFolderHoverCancel,
   onFolderToggle,
@@ -107,7 +105,6 @@ const FileRow = memo(function FileRow({
   indexedIds: Set<string>;
   expandedIds?: Set<string>;
   selectedIds?: Set<string>;
-  onFolderOpen: (id: string, name: string) => void;
   onFolderHover?: (folderId: string) => void;
   onFolderHoverCancel?: (folderId: string) => void;
   onFolderToggle?: (folderId: string) => void;
@@ -146,8 +143,8 @@ const FileRow = memo(function FileRow({
 
   return (
     <tr className="border-b border-border/50 transition-colors hover:bg-muted/50">
-      <td className="w-10 px-2 py-2">
-        <span className={cn("flex items-center", ROW_CONTENT_HEIGHT)}>
+      <td className="w-8 shrink-0 px-1 py-2">
+        <span className={cn("flex items-center justify-center", ROW_CONTENT_HEIGHT)}>
           <Checkbox
             checked={isSelected}
             onCheckedChange={handleCheckboxChange}
@@ -182,14 +179,10 @@ const FileRow = memo(function FileRow({
                   <ChevronRight className="size-4" />
                 )}
               </button>
-              <button
-                type="button"
-                onClick={() => onFolderOpen(node.id, node.name)}
-                className="flex min-w-0 items-center gap-2 text-left"
-              >
+              <span className="flex min-w-0 items-center gap-2 text-left">
                 <FileIcon type={node.type} name={node.name} />
                 <span className="min-w-0 truncate">{node.name}</span>
-              </button>
+              </span>
             </span>
           ) : (
             <>
@@ -257,7 +250,7 @@ const FileRow = memo(function FileRow({
 function SkeletonRow({ depth }: { depth: number }) {
   return (
     <tr className="border-b border-border/50">
-      <td className="w-10 px-2 py-2">
+      <td className="w-8 shrink-0 px-1 py-2">
         <Skeleton className="h-10 w-4" />
       </td>
       <td className="px-4 py-2">
@@ -282,7 +275,6 @@ function SkeletonRow({ depth }: { depth: number }) {
 export function FileTable({
   resources,
   isLoading,
-  onFolderOpen,
   indexedIds = [],
   onIndexRequest,
   onDeIndexRequest,
@@ -307,7 +299,7 @@ export function FileTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border">
-            <th className="w-10 px-2 py-2" aria-hidden />
+            <th className="w-8 shrink-0 px-1 py-2" aria-hidden />
             <th className="px-4 py-2 text-left font-medium">Name</th>
             <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">Status</th>
             <th className="w-24 px-4 py-2" aria-hidden />
@@ -352,7 +344,7 @@ export function FileTable({
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-border">
-          <th className="w-10 px-2 py-2" aria-hidden />
+          <th className="w-8 shrink-0 px-1 py-2" aria-hidden />
           <th
             className="px-4 py-2 text-left font-medium"
             aria-sort={sortOrder === "asc" ? "ascending" : "descending"}
@@ -385,7 +377,6 @@ export function FileTable({
               indexedIds={indexedSet}
               expandedIds={expandedIds}
               selectedIds={selectedIds}
-              onFolderOpen={onFolderOpen}
               onFolderHover={onFolderHover}
               onFolderHoverCancel={onFolderHoverCancel}
               onFolderToggle={onFolderToggle}
