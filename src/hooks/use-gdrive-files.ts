@@ -10,6 +10,19 @@ const STALE_TIME_MS = 60 * 1000;
 const GC_TIME_MS = 5 * 60 * 1000;
 
 /**
+ * Shared options for GDrive folder queries. Use for prefetch, fetchQuery, and useQuery
+ * to ensure cache consistency (same staleTime, gcTime, queryFn).
+ */
+export function getGDriveQueryOptions(folderId: string | undefined) {
+  return {
+    queryKey: stackAIQueryKeys.gdrive(folderId),
+    queryFn: () => getFilesAction(folderId),
+    staleTime: STALE_TIME_MS,
+    gcTime: GC_TIME_MS,
+  } as const;
+}
+
+/**
  * Fetches GDrive file/folder list for the given folder (root when folderId is omitted).
  * Uses Server Action that maps StackAIResource → FileNode at the Action level.
  * Stale-while-revalidate: cached data shown instantly when re-navigating.
@@ -18,10 +31,5 @@ const GC_TIME_MS = 5 * 60 * 1000;
  * @returns TanStack Query result with PaginatedResponse<FileNode>
  */
 export function useGDriveFiles(folderId?: string) {
-  return useQuery({
-    queryKey: stackAIQueryKeys.gdrive(folderId),
-    queryFn: () => getFilesAction(folderId),
-    staleTime: STALE_TIME_MS,
-    gcTime: GC_TIME_MS,
-  });
+  return useQuery(getGDriveQueryOptions(folderId));
 }

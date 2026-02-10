@@ -42,16 +42,28 @@ export function filterFilesByStatus(
   });
 }
 
+function getFileExtension(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  return ext;
+}
+
 /**
- * Pure function: filters files by type (folder vs file).
+ * Pure function: filters files by type (folder, file, or extension).
  */
 export function filterFilesByType(
   files: FileNode[],
   type: TypeFilter,
 ): FileNode[] {
   if (type === "all") return files;
-  return files.filter((node) =>
-    type === "folder" ? node.type === "folder" : node.type === "file",
+  if (type === "folder") {
+    return files.filter((node) => node.type === "folder");
+  }
+  if (type === "file") {
+    return files.filter((node) => node.type === "file");
+  }
+  const ext = type;
+  return files.filter(
+    (node) => node.type === "file" && getFileExtension(node.name) === ext,
   );
 }
 
