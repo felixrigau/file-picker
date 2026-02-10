@@ -1,8 +1,15 @@
 "use client";
 
-import { useGDriveFiles } from "@/hooks/use-gdrive-files";
+import {
+  useActiveKnowledgeBaseId,
+  useGDriveFiles,
+  useIndexedResourceIds,
+  useKBActions,
+} from "@/hooks";
+import type { FileNode } from "@/types";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { FileTable } from "./FileTable";
 
 /** Single breadcrumb segment: id for navigation, name for display */
@@ -22,6 +29,9 @@ export function FilePickerShell() {
   const [searchFilter, setSearchFilter] = useState("");
 
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
+  const indexedIds = useIndexedResourceIds();
+  const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
+  const { deIndexResource } = useKBActions();
 
   const isMissingEnv =
     isError &&
@@ -72,6 +82,28 @@ export function FilePickerShell() {
       mapsTo(id, name);
     },
     [mapsTo],
+  );
+
+  const handleDeIndexRequest = useCallback(
+    (node: FileNode) => {
+      if (activeKnowledgeBaseId == null) return;
+      if (node.resourcePath == null) {
+        toast.error("Cannot remove: missing resource path");
+        return;
+      }
+      deIndexResource.mutate(
+        {
+          knowledgeBaseId: activeKnowledgeBaseId,
+          resourcePath: node.resourcePath,
+          resourceId: node.id,
+        },
+        {
+          onError: (err) =>
+            toast.error(err instanceof Error ? err.message : "Failed to remove from index"),
+        },
+      );
+    },
+    [activeKnowledgeBaseId, deIndexResource],
   );
 
   return (
@@ -151,6 +183,11 @@ export function FilePickerShell() {
             resources={filteredResources}
             isLoading={isLoading}
             onFolderOpen={handleFolderOpen}
+            indexedIds={indexedIds}
+            onDeIndexRequest={
+              activeKnowledgeBaseId != null ? handleDeIndexRequest : undefined
+            }
+            isDeIndexPending={deIndexResource.isPending}
           />
         )}
       </div>
