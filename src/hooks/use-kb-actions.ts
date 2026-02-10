@@ -103,6 +103,43 @@ export function useKBActions() {
     },
   });
 
+  type BatchIndexVariables = { resourceIds: string[]; expandedIds: string[] };
+
+  const indexResourcesBatch = useMutation({
+    mutationFn: async ({ resourceIds }: BatchIndexVariables) => {
+      const { connectionId } = await getConnectionIdAction();
+      return syncToKnowledgeBaseAction(connectionId, resourceIds);
+    },
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: INDEXED_IDS_KEY });
+      const previous = queryClient.getQueryData<string[]>(INDEXED_IDS_KEY);
+      const toastId = toast.loading("Indexing selection...");
+      queryClient.setQueryData<string[]>(INDEXED_IDS_KEY, (old) => {
+        const set = new Set(old ?? []);
+        variables.expandedIds.forEach((id) => set.add(id));
+        return [...set];
+      });
+      return { previous, toastId };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous != null) {
+        queryClient.setQueryData(INDEXED_IDS_KEY, context.previous);
+      }
+      toast.error("Error indexing selection", { id: context?.toastId });
+    },
+    onSuccess: (result, _vars, context) => {
+      queryClient.setQueryData(ACTIVE_KB_KEY, result.knowledge_base_id);
+      if (context?.toastId != null) {
+        toast.success("Selection indexed successfully", { id: context.toastId });
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === "gdrive",
+      });
+    },
+  });
+
   const indexNode = useCallback(
     (node: { id: string; type: "file" | "folder" }) => {
       const run = async () => {
@@ -116,6 +153,7 @@ export function useKBActions() {
     },
     [indexResource],
   );
+
 
   type DeIndexVariables = {
     knowledgeBaseId: string;
@@ -156,5 +194,10 @@ export function useKBActions() {
     },
   });
 
-  return { indexResource, deIndexResource, indexNode };
+  return {
+    indexResource,
+    deIndexResource,
+    indexNode,
+    indexResourcesBatch,
+  };
 }

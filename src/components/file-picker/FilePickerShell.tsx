@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { toast } from "sonner";
 import type { DisplayRow } from "./FileTable";
 import { FileTable } from "./FileTable";
+import { FloatingSelectionBar } from "./FloatingSelectionBar";
 import { FilterDropdown } from "./FilterDropdown";
 
 /** Single breadcrumb segment: id for navigation, name for display */
@@ -79,7 +80,8 @@ export function FilePickerShell() {
   const indexedIdsRaw = useIndexedResourceIds();
   const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
-  const { indexNode, indexResource, deIndexResource } = useKBActions();
+  const { indexNode, indexResource, deIndexResource, indexResourcesBatch } =
+    useKBActions();
 
   const isMissingEnv =
     isError &&
@@ -371,6 +373,49 @@ export function FilePickerShell() {
     [deIndexResource.isPending, deIndexResource.variables],
   );
 
+  const nodeById = useMemo(() => {
+    const map = new Map<string, FileNode>();
+    for (const row of displayedResources) {
+      if (row.type === "resource") map.set(row.node.id, row.node);
+    }
+    return map;
+  }, [displayedResources]);
+
+  const indexableSelectedNodes = useMemo(() => {
+    const nodes: FileNode[] = [];
+    for (const id of selectedIds) {
+      const node = nodeById.get(id);
+      if (node && !node.isIndexed && !indexedIds.has(id)) {
+        nodes.push(node);
+      }
+    }
+    return nodes;
+  }, [selectedIds, nodeById, indexedIds]);
+
+  const handleIndexSelected = useCallback(async () => {
+    if (indexableSelectedNodes.length === 0) return;
+    const { getDescendantResourceIdsAction } = await import(
+      "@/app/actions/server-actions"
+    );
+    const expandedIdsArrays = await Promise.all(
+      indexableSelectedNodes.map((n) =>
+        n.type === "folder"
+          ? getDescendantResourceIdsAction(n.id)
+          : Promise.resolve([n.id]),
+      ),
+    );
+    const allExpandedIds = expandedIdsArrays.flat();
+    const resourceIds = indexableSelectedNodes.map((n) => n.id);
+    indexResourcesBatch.mutate({ resourceIds, expandedIds: allExpandedIds });
+  }, [indexableSelectedNodes, indexResourcesBatch]);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const showSelectionBar = selectedIds.size > 1;
+  const isIndexingSelection = indexResourcesBatch.isPending;
+
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       {/* Breadcrumbs */}
@@ -419,10 +464,11 @@ export function FilePickerShell() {
       <div
         className={cn(
           CONTAINER_HEIGHT,
-          "overflow-x-auto overflow-y-auto rounded-md border border-border",
+          "relative flex flex-col overflow-hidden rounded-md border border-border",
         )}
       >
-        {isMissingEnv ? (
+        <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+          {isMissingEnv ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
             <p className="font-medium">Environment variables not configured</p>
             <p className="text-sm">
@@ -480,6 +526,23 @@ export function FilePickerShell() {
             }
             onResetFilters={hasActiveFilters ? handleClearFilters : undefined}
           />
+        )}
+        </div>
+        {showSelectionBar && (
+          <div
+            className={cn(
+              "animate-in slide-in-from-bottom-2 fade-in duration-200",
+              "border-t border-border bg-card/95 backdrop-blur-sm",
+            )}
+          >
+          <FloatingSelectionBar
+            selectedCount={selectedIds.size}
+            indexableCount={indexableSelectedNodes.length}
+            onIndexSelected={handleIndexSelected}
+            onClearSelection={handleClearSelection}
+            isIndexing={isIndexingSelection}
+          />
+          </div>
         )}
       </div>
     </div>
