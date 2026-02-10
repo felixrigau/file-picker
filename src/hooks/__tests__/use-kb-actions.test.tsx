@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
-import { useKBActions, useIndexedResourceIds } from "@/hooks/use-kb-actions";
 import { stackAIQueryKeys } from "@/hooks/query-keys";
+import { useIndexedResourceIds, useKBActions } from "@/hooks/use-kb-actions";
+import { createWrapper } from "@/test/test-utils";
+import { QueryClient } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/actions/stack-ai-actions", () => ({
   getConnectionIdAction: vi.fn(),
@@ -12,14 +12,6 @@ vi.mock("@/app/actions/stack-ai-actions", () => ({
 }));
 
 const actions = await import("@/app/actions/stack-ai-actions");
-
-function createWrapper(client: QueryClient) {
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
-  };
-}
 
 describe("useKBActions", () => {
   let queryClient: QueryClient;
@@ -38,7 +30,7 @@ describe("useKBActions", () => {
       knowledge_base_id: "kb-1",
     });
     vi.mocked(actions.deleteFromKnowledgeBaseAction).mockResolvedValue(
-      undefined
+      undefined,
     );
   });
 
@@ -109,7 +101,9 @@ describe("useKBActions", () => {
       expect(result.current.indexResource.isError).toBe(true);
     });
 
-    expect(queryClient.getQueryData<string[]>(indexedKey)).toEqual(["existing"]);
+    expect(queryClient.getQueryData<string[]>(indexedKey)).toEqual([
+      "existing",
+    ]);
   });
 });
 

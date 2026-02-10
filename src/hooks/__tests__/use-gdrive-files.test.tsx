@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
 import { useGDriveFiles } from "@/hooks/use-gdrive-files";
+import { createWrapper } from "@/test/test-utils";
 import type { PaginatedResponse, StackAIResource } from "@/types";
+import { QueryClient } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/actions/stack-ai-actions", () => ({
   getFilesAction: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock("@/app/actions/stack-ai-actions", () => ({
 const { getFilesAction } = await import("@/app/actions/stack-ai-actions");
 
 const mockPaginated = (
-  data: StackAIResource[]
+  data: StackAIResource[],
 ): PaginatedResponse<StackAIResource> => ({
   data,
   next_cursor: null,
@@ -22,20 +22,12 @@ const mockPaginated = (
 const mockResource = (
   id: string,
   path: string,
-  inode_type: "file" | "directory" = "file"
+  inode_type: "file" | "directory" = "file",
 ): StackAIResource => ({
   resource_id: id,
   inode_type,
   inode_path: { path },
 });
-
-function createWrapper(client: QueryClient) {
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
-    );
-  };
-}
 
 describe("useGDriveFiles", () => {
   let queryClient: QueryClient;
@@ -82,8 +74,8 @@ describe("useGDriveFiles", () => {
       ({ folderId }: { folderId?: string }) => useGDriveFiles(folderId),
       {
         wrapper: createWrapper(queryClient),
-        initialProps: { folderId: undefined },
-      }
+        initialProps: { folderId: undefined } as { folderId?: string },
+      },
     );
 
     await waitFor(() => {

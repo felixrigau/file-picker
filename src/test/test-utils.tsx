@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, type RenderHookOptions } from "@testing-library/react";
+import type { ReactNode } from "react";
 
 /** Creates a fresh QueryClient for each test to avoid cache leakage. */
 export function createTestQueryClient() {
@@ -12,13 +12,8 @@ export function createTestQueryClient() {
   });
 }
 
-interface WrapperProps {
-  children: ReactNode;
-  client: QueryClient;
-}
-
-function createWrapper(client: QueryClient) {
-  return function Wrapper({ children }: WrapperProps) {
+export function createWrapper(client: QueryClient) {
+  return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     );
@@ -32,7 +27,9 @@ export function renderHookWithClient<Result, Props>(
   hook: (props: Props) => Result,
   options: {
     client: QueryClient;
-  } & Omit<RenderHookOptions<Props>, "wrapper"> = { client: createTestQueryClient() }
+  } & Omit<RenderHookOptions<Props>, "wrapper"> = {
+    client: createTestQueryClient(),
+  },
 ) {
   const { client, ...rest } = options;
   return renderHook(hook, {
