@@ -8,15 +8,16 @@ import {
   useKBActions,
 } from "@/hooks";
 import { stackAIQueryKeys } from "@/hooks/query-keys";
+import { cn } from "@/lib/utils";
 import { applyFilters } from "@/lib/utils/filter-files";
 import { sortFiles } from "@/lib/utils/sort-files";
-import { cn } from "@/lib/utils";
 import type { FileNode, StatusFilter, TypeFilter } from "@/types";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useRef, useState, useTransition } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import type { ResourceRow } from "./FileTable";
 import { FileTable } from "./FileTable";
 import { FilterDropdown } from "./FilterDropdown";
 
@@ -64,16 +65,16 @@ export function FilePickerShell() {
   );
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbSegment[]>([]);
   const [searchFilter, setSearchFilter] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [childData, setChildData] = useState<Map<string, FileNode[]>>(new Map());
   const [, startTransition] = useTransition();
   const queryClient = useQueryClient();
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
   const indexedIdsRaw = useIndexedResourceIds();
-  const indexedIds = useMemo(
-    () => new Set(indexedIdsRaw),
-    [indexedIdsRaw],
-  );
+  const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
   const { indexNode, indexResource, deIndexResource } = useKBActions();
 
@@ -93,6 +94,8 @@ export function FilePickerShell() {
   const mapsTo = useCallback(
     (id: string | undefined, displayName?: string) => {
       setSearchFilter("");
+      setExpandedIds(new Set());
+      setChildData(new Map());
 
       if (id === undefined) {
         setCurrentFolderId(undefined);
@@ -173,6 +176,59 @@ export function FilePickerShell() {
     [filteredResources, sortOrder],
   );
 
+  const handleFolderToggle = useCallback((folderId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  }, []);
+
+  const handleSelectionChange = useCallback((ids: Set<string>) => {
+    setSelectedIds(ids);
+  }, []);
+
+  useEffect(() => {
+    const toFetch = [...expandedIds].filter((id) => !childData.has(id));
+    if (toFetch.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      toFetch.map((id) =>
+        getFilesAction(id).then((r) => ({ id, data: r.data })),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      setChildData((prev) => {
+        const next = new Map(prev);
+        for (const { id, data } of results) {
+          next.set(id, data);
+        }
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [expandedIds, childData]);
+
+  const displayedResources = useMemo((): ResourceRow[] => {
+    const rows: ResourceRow[] = [];
+    for (const node of sortedResources) {
+      rows.push({ node, depth: 0 });
+      if (node.type === "folder" && expandedIds.has(node.id)) {
+        const children = childData.get(node.id);
+        if (children) {
+          const sortedChildren = sortFiles(children, sortOrder);
+          for (const child of sortedChildren) {
+            rows.push({ node: child, depth: 1 });
+          }
+        }
+      }
+    }
+    return rows;
+  }, [sortedResources, expandedIds, childData, sortOrder]);
+
   const handleSortToggle = useCallback(() => {
     startTransition(() => {
       const next = sortOrder === "asc" ? "desc" : "asc";
@@ -189,7 +245,8 @@ export function FilePickerShell() {
     [mapsTo],
   );
 
-  const PREFETCH_DELAY_MS = 100;
+  /** Delay before prefetch to avoid requests when cursor is just passing through */
+  const PREFETCH_DELAY_MS = 200;
 
   const handleFolderHover = useCallback(
     (folderId: string) => {
@@ -205,13 +262,16 @@ export function FilePickerShell() {
     [queryClient],
   );
 
-  const handleFolderHoverCancel = useCallback(() => {
-    if (prefetchTimerRef.current) {
-      clearTimeout(prefetchTimerRef.current);
-      prefetchTimerRef.current = null;
-    }
-  }, []);
-
+  const handleFolderHoverCancel = useCallback(
+    (folderId: string) => {
+      if (prefetchTimerRef.current) {
+        clearTimeout(prefetchTimerRef.current);
+        prefetchTimerRef.current = null;
+      }
+      queryClient.cancelQueries({ queryKey: stackAIQueryKeys.gdrive(folderId) });
+    },
+    [queryClient],
+  );
 
   const handleIndexRequest = useCallback(
     (node: FileNode) => {
@@ -295,9 +355,6 @@ export function FilePickerShell() {
           placeholder="Filter by name..."
           className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
-        <span className="shrink-0 text-xs text-muted-foreground">
-          Sort: A–Z / Z–A (click Name header)
-        </span>
       </div>
 
       {/* Fixed-height scrollable area — prevents CLS when data loads */}
@@ -343,11 +400,15 @@ export function FilePickerShell() {
           </div>
         ) : (
           <FileTable
-            resources={sortedResources}
+            resources={displayedResources}
             isLoading={isLoading}
             onFolderOpen={handleFolderOpen}
             onFolderHover={handleFolderHover}
             onFolderHoverCancel={handleFolderHoverCancel}
+            onFolderToggle={handleFolderToggle}
+            expandedIds={expandedIds}
+            selectedIds={selectedIds}
+            onSelectionChange={handleSelectionChange}
             indexedIds={indexedIdsRaw}
             onIndexRequest={handleIndexRequest}
             onDeIndexRequest={handleDeIndexRequest}
