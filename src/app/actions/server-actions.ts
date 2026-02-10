@@ -1,25 +1,15 @@
 "use server";
 
-import { mapResourceToFileNode } from "@/lib/api-mappers";
+import { mapPaginatedApiResponseToResult } from "@/lib/api-mappers";
 import { getApiService } from "@/lib/api-service";
-import type {
-  FileNode,
-  IndexingParams,
-  PaginatedResponse,
-} from "@/types";
+import type { IndexingParams } from "@/types/api";
+import type { FileNode, PaginatedResult } from "@/types/domain";
 
 export async function getFilesAction(
   folderId?: string,
-): Promise<PaginatedResponse<FileNode>> {
-  const response = await getApiService().fetchGDriveContents(folderId);
-  const data: FileNode[] = response.data.map((r) =>
-    mapResourceToFileNode(r, folderId),
-  );
-  return {
-    data,
-    next_cursor: response.next_cursor,
-    current_cursor: response.current_cursor,
-  };
+): Promise<PaginatedResult<FileNode>> {
+  const apiResponse = await getApiService().fetchGDriveContents(folderId);
+  return mapPaginatedApiResponseToResult(apiResponse, folderId);
 }
 
 export async function getConnectionIdAction(): Promise<{

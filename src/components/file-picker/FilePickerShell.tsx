@@ -11,7 +11,12 @@ import { queryKeys } from "@/hooks/query-keys";
 import { cn } from "@/lib/utils";
 import { applyFilters } from "@/utils/filter-files";
 import { sortFiles } from "@/utils/sort-files";
-import type { FileNode, StatusFilter, TypeFilter } from "@/types";
+import type {
+  FileNode,
+  PaginatedResult,
+  StatusFilter,
+  TypeFilter,
+} from "@/types/domain";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -136,13 +141,13 @@ export function FilePickerShell() {
 
   const filteredResources = useMemo(
     () =>
-      applyFilters(data?.data ?? [], {
+      applyFilters(data?.items ?? [], {
         searchQuery: searchFilter,
         status: statusFilter,
         type: typeFilter,
         indexedIds,
       }),
-    [data?.data, searchFilter, statusFilter, typeFilter, indexedIds],
+    [data?.items, searchFilter, statusFilter, typeFilter, indexedIds],
   );
 
   const updateUrlParams = useCallback(
@@ -216,11 +221,11 @@ export function FilePickerShell() {
     const idsToFetch: string[] = [];
 
     for (const id of toFetch) {
-      const cached = queryClient.getQueryData<{ data: FileNode[] }>(
+      const cached = queryClient.getQueryData<PaginatedResult<FileNode>>(
         queryKeys.gdrive(id),
       );
-      if (cached?.data) {
-        results.push({ id, data: cached.data });
+      if (cached?.items) {
+        results.push({ id, data: cached.items });
       } else {
         idsToFetch.push(id);
       }
@@ -245,7 +250,7 @@ export function FilePickerShell() {
       idsToFetch.map((id) =>
         queryClient
           .fetchQuery(getGDriveQueryOptions(id))
-          .then((r) => ({ id, data: r.data })),
+          .then((r) => ({ id, data: r.items })),
       ),
     ).then((settledResults) => {
       if (cancelled) return;
@@ -509,7 +514,7 @@ export function FilePickerShell() {
               sortOrder={sortOrder}
               onSortToggle={handleSortToggle}
               emptyMessage={
-                (data?.data?.length ?? 0) === 0
+                (data?.items?.length ?? 0) === 0
                   ? "No files or folders"
                   : "No files found"
               }

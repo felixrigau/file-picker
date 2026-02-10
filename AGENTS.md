@@ -6,7 +6,7 @@
 - **SRP (Single Responsibility):** - UI Components: Pure presentation + event emission.
   - Logic Helpers: Pure functions for sorting/filtering.
   - Smart Hooks: Orchestrate Server State (TanStack Query).
-- **Domain vs Transport:** API types (ApiResource) must be mapped to UI models (FileNode) at the Action or Hook level.
+- **Domain vs Transport:** API types (api.ts) must be mapped to domain types (domain.ts) at the Action layer. View (components, hooks) imports only domain types. Flow: API → Domain → View.
 
 ## 💻 Tech Stack & Boundaries
 
@@ -44,7 +44,7 @@ Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle si
 - `@/app/actions/`: Entry point for Server-side logic (Wraps `ApiService`).
 - `@/hooks/`: Modular hooks (e.g., `use-gdrive-files.ts`). Exported from `index.ts`.
 - `@/lib/`: Singleton services & business logic (e.g., `api-service.ts`).
-- `@/types/`: Centralized domain types (Avoid `any`).
+- `@/types/`: Types split by layer — `domain.ts` (View), `api.ts` (infra). Flow: API → Domain → View. View imports only from `@/types/domain`. Avoid `any`.
 
 ## 🧪 Testing Protocol
 

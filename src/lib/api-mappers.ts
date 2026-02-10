@@ -1,4 +1,6 @@
-import type { ApiResource, FileNode } from "@/types";
+import type { PaginatedApiResponse } from "@/types/api";
+import type { ApiResource } from "@/types/api";
+import type { FileNode, PaginatedResult } from "@/types/domain";
 
 /**
  * Extracts display name from inode path (last segment).
@@ -11,11 +13,12 @@ function getDisplayName(resource: ApiResource): string {
 }
 
 /**
- * Maps API resource (transport) to domain FileNode (UI model).
- * Used at Action level per DIP/domain vs transport separation.
+ * Maps infrastructure (API) resource to domain FileNode.
+ * Used at Action level per DIP — keeps transport types out of domain.
  *
- * @param resource - Raw API resource from backend
+ * @param resource - API resource (infra/transport layer)
  * @param parentId - Optional parent folder id (folder from which children were fetched)
+ * @returns Domain FileNode for UI consumption
  */
 export function mapResourceToFileNode(
   resource: ApiResource,
@@ -30,5 +33,24 @@ export function mapResourceToFileNode(
     isIndexed: resource.status === "indexed",
     parentId,
     resourcePath: resource.inode_path?.path ?? undefined,
+  };
+}
+
+/**
+ * Maps paginated API response to domain PaginatedResult.
+ * API → Domain boundary for list responses.
+ *
+ * @param apiResponse - Raw paginated response from API
+ * @param parentId - Optional parent folder id for child nodes
+ * @returns Domain PaginatedResult for View consumption
+ */
+export function mapPaginatedApiResponseToResult(
+  apiResponse: PaginatedApiResponse<ApiResource>,
+  parentId?: string,
+): PaginatedResult<FileNode> {
+  return {
+    items: apiResponse.data.map((r) => mapResourceToFileNode(r, parentId)),
+    nextCursor: apiResponse.next_cursor,
+    currentCursor: apiResponse.current_cursor,
   };
 }

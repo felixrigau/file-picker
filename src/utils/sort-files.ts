@@ -1,4 +1,4 @@
-import type { FileNode } from "@/types";
+import type { FileNode } from "@/types/domain";
 
 /** Sort direction: ascending (A-Z) or descending (Z-A) */
 export type SortOrder = "asc" | "desc";

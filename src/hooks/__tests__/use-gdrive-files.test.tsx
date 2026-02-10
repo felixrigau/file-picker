@@ -1,6 +1,6 @@
 import { useGDriveFiles } from "@/hooks/use-gdrive-files";
 import { createWrapper } from "@/test/test-utils";
-import type { FileNode, PaginatedResponse } from "@/types";
+import type { FileNode, PaginatedResult } from "@/types/domain";
 import { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,10 +11,10 @@ vi.mock("@/app/actions/server-actions", () => ({
 
 const { getFilesAction } = await import("@/app/actions/server-actions");
 
-const mockPaginated = (data: FileNode[]): PaginatedResponse<FileNode> => ({
-  data,
-  next_cursor: null,
-  current_cursor: null,
+const mockPaginated = (data: FileNode[]): PaginatedResult<FileNode> => ({
+  items: data,
+  nextCursor: null,
+  currentCursor: null,
 });
 
 const mockFileNode = (
@@ -59,7 +59,7 @@ describe("useGDriveFiles", () => {
     });
 
     expect(result.current.data).toEqual(mockData);
-    expect(result.current.data?.data).toHaveLength(2);
+    expect(result.current.data?.items).toHaveLength(2);
     expect(getFilesAction).toHaveBeenCalledWith(undefined);
   });
 
@@ -81,8 +81,8 @@ describe("useGDriveFiles", () => {
     await waitFor(() => {
       expect(result.current.isSuccess).toBe(true);
     });
-    expect(result.current.data?.data).toHaveLength(1);
-    expect(result.current.data?.data?.[0].id).toBe("r1");
+    expect(result.current.data?.items).toHaveLength(1);
+    expect(result.current.data?.items?.[0].id).toBe("r1");
     expect(getFilesAction).toHaveBeenCalledWith(undefined);
 
     rerender({ folderId: "folder-123" });
@@ -91,8 +91,8 @@ describe("useGDriveFiles", () => {
       expect(getFilesAction).toHaveBeenCalledWith("folder-123");
     });
     await waitFor(() => {
-      expect(result.current.data?.data).toHaveLength(1);
-      expect(result.current.data?.data?.[0].id).toBe("c1");
+      expect(result.current.data?.items).toHaveLength(1);
+      expect(result.current.data?.items?.[0].id).toBe("c1");
     });
   });
 });

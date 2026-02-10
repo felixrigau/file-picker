@@ -15,8 +15,8 @@ import type {
   CreateKnowledgeBasePayload,
   CreateKnowledgeBaseResponse,
   IndexingParams,
-  PaginatedResponse,
-} from "@/types";
+  PaginatedApiResponse,
+} from "@/types/api";
 
 const SUPABASE_AUTH_URL = "https://sb.stack-ai.com";
 const BACKEND_URL = "https://api.stack-ai.com";
@@ -190,13 +190,13 @@ export class ApiService {
    */
   async fetchGDriveContents(
     folderId?: string,
-  ): Promise<PaginatedResponse<ApiResource>> {
+  ): Promise<PaginatedApiResponse<ApiResource>> {
     const connectionId = await this.getConnectionId();
     const baseUrl = `${BACKEND_URL}/v1/connections/${connectionId}/resources/children`;
     const url = folderId
       ? `${baseUrl}?${new URLSearchParams({ resource_id: folderId }).toString()}`
       : baseUrl;
-    return this.request<PaginatedResponse<ApiResource>>("GET", url);
+    return this.request<PaginatedApiResponse<ApiResource>>("GET", url);
   }
 
   /**

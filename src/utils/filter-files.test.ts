@@ -1,4 +1,4 @@
-import type { FileNode } from "@/types";
+import type { FileNode } from "@/types/domain";
 import { describe, expect, it } from "vitest";
 import {
   applyFilters,
