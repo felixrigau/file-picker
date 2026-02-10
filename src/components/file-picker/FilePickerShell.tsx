@@ -19,7 +19,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { toast } from "sonner";
 import type { DisplayRow } from "./FileTable";
 import { FileTable } from "./FileTable";
-import { FloatingSelectionBar } from "./FloatingSelectionBar";
 import { FilterPills } from "./FilterPills";
 
 /** Single breadcrumb segment: id for navigation, name for display */
@@ -66,7 +65,6 @@ export function FilePickerShell() {
   );
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbSegment[]>([]);
   const [searchFilter, setSearchFilter] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [childData, setChildData] = useState<Map<string, FileNode[]>>(new Map());
   const [, startTransition] = useTransition();
@@ -80,8 +78,13 @@ export function FilePickerShell() {
   const indexedIdsRaw = useIndexedResourceIds();
   const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
-  const { indexNode, indexResource, deIndexResource, indexResourcesBatch } =
-    useKBActions();
+  const {
+    indexNode,
+    indexResource,
+    deIndexResource,
+    deIndexFolder,
+    deIndexNode,
+  } = useKBActions();
 
   const isMissingEnv =
     isError &&
@@ -188,10 +191,6 @@ export function FilePickerShell() {
       else next.add(folderId);
       return next;
     });
-  }, []);
-
-  const handleSelectionChange = useCallback((ids: Set<string>) => {
-    setSelectedIds(ids);
   }, []);
 
   useEffect(() => {
@@ -350,13 +349,9 @@ export function FilePickerShell() {
         toast.error("Cannot remove: missing resource path");
         return;
       }
-      deIndexResource.mutate({
-        knowledgeBaseId: activeKnowledgeBaseId,
-        resourcePath: node.resourcePath,
-        resourceId: node.id,
-      });
+      deIndexNode(node, activeKnowledgeBaseId);
     },
-    [activeKnowledgeBaseId, deIndexResource],
+    [activeKnowledgeBaseId, deIndexNode],
   );
 
   const isIndexPending = useCallback(
@@ -367,54 +362,23 @@ export function FilePickerShell() {
   );
 
   const isDeIndexPending = useCallback(
-    (resourceId: string) =>
-      deIndexResource.isPending &&
-      deIndexResource.variables?.resourceId === resourceId,
-    [deIndexResource.isPending, deIndexResource.variables],
-  );
-
-  const nodeById = useMemo(() => {
-    const map = new Map<string, FileNode>();
-    for (const row of displayedResources) {
-      if (row.type === "resource") map.set(row.node.id, row.node);
-    }
-    return map;
-  }, [displayedResources]);
-
-  const indexableSelectedNodes = useMemo(() => {
-    const nodes: FileNode[] = [];
-    for (const id of selectedIds) {
-      const node = nodeById.get(id);
-      if (node && !node.isIndexed && !indexedIds.has(id)) {
-        nodes.push(node);
+    (resourceId: string) => {
+      if (deIndexResource.isPending) {
+        return deIndexResource.variables?.resourceId === resourceId;
       }
-    }
-    return nodes;
-  }, [selectedIds, nodeById, indexedIds]);
-
-  const handleIndexSelected = useCallback(async () => {
-    if (indexableSelectedNodes.length === 0) return;
-    const { getDescendantResourceIdsAction } = await import(
-      "@/app/actions/server-actions"
-    );
-    const expandedIdsArrays = await Promise.all(
-      indexableSelectedNodes.map((n) =>
-        n.type === "folder"
-          ? getDescendantResourceIdsAction(n.id)
-          : Promise.resolve([n.id]),
-      ),
-    );
-    const allExpandedIds = expandedIdsArrays.flat();
-    const resourceIds = indexableSelectedNodes.map((n) => n.id);
-    indexResourcesBatch.mutate({ resourceIds, expandedIds: allExpandedIds });
-  }, [indexableSelectedNodes, indexResourcesBatch]);
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
-
-  const showSelectionBar = selectedIds.size > 1;
-  const isIndexingSelection = indexResourcesBatch.isPending;
+      if (deIndexFolder.isPending) {
+        const ids = deIndexFolder.variables?.items?.map((i) => i.resourceId) ?? [];
+        return ids.includes(resourceId);
+      }
+      return false;
+    },
+    [
+      deIndexResource.isPending,
+      deIndexResource.variables,
+      deIndexFolder.isPending,
+      deIndexFolder.variables,
+    ],
+  );
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
@@ -510,8 +474,6 @@ export function FilePickerShell() {
             onFolderHoverCancel={handleFolderHoverCancel}
             onFolderToggle={handleFolderToggle}
             expandedIds={expandedIds}
-            selectedIds={selectedIds}
-            onSelectionChange={handleSelectionChange}
             indexedIds={indexedIdsRaw}
             onIndexRequest={handleIndexRequest}
             onDeIndexRequest={handleDeIndexRequest}
@@ -528,22 +490,6 @@ export function FilePickerShell() {
           />
         )}
         </div>
-        {showSelectionBar && (
-          <div
-            className={cn(
-              "animate-in slide-in-from-bottom-2 fade-in duration-200",
-              "border-t border-border bg-card/95 backdrop-blur-sm",
-            )}
-          >
-          <FloatingSelectionBar
-            selectedCount={selectedIds.size}
-            indexableCount={indexableSelectedNodes.length}
-            onIndexSelected={handleIndexSelected}
-            onClearSelection={handleClearSelection}
-            isIndexing={isIndexingSelection}
-          />
-          </div>
-        )}
       </div>
     </div>
   );

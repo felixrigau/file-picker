@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { FileNode } from "@/types";
@@ -14,6 +13,7 @@ import {
   File,
   FileText,
   Folder,
+  Loader2,
   Plus,
   Table,
   Trash2,
@@ -40,8 +40,6 @@ interface FileTableProps {
   onFolderHoverCancel?: (folderId: string) => void;
   onFolderToggle?: (folderId: string) => void;
   expandedIds?: Set<string>;
-  selectedIds?: Set<string>;
-  onSelectionChange?: (ids: Set<string>) => void;
   indexedIds?: string[];
   onIndexRequest?: (node: FileNode) => void;
   onDeIndexRequest?: (node: FileNode) => void;
@@ -95,11 +93,9 @@ const FileRow = memo(function FileRow({
   row,
   indexedIds,
   expandedIds,
-  selectedIds,
   onFolderHover,
   onFolderHoverCancel,
   onFolderToggle,
-  onSelectionChange,
   onIndexRequest,
   onDeIndexRequest,
   isIndexPending,
@@ -108,11 +104,9 @@ const FileRow = memo(function FileRow({
   row: ResourceRow;
   indexedIds: Set<string>;
   expandedIds?: Set<string>;
-  selectedIds?: Set<string>;
   onFolderHover?: (folderId: string) => void;
   onFolderHoverCancel?: (folderId: string) => void;
   onFolderToggle?: (folderId: string) => void;
-  onSelectionChange?: (ids: Set<string>) => void;
   onIndexRequest?: (node: FileNode) => void;
   onDeIndexRequest?: (node: FileNode) => void;
   isIndexPending?: (resourceId: string) => boolean;
@@ -128,34 +122,14 @@ const FileRow = memo(function FileRow({
   const indexPending = isIndexPending?.(node.id) ?? false;
   const deIndexPending = isDeIndexPending?.(node.id) ?? false;
   const actionDisabled = indexPending || deIndexPending;
-  const isSelected = selectedIds?.has(node.id) ?? false;
 
-  const handleCheckboxChange = (checked: boolean | "indeterminate") => {
-    if (!onSelectionChange) return;
-    const next = new Set(selectedIds ?? []);
-    if (checked === true) next.add(node.id);
-    else next.delete(node.id);
-    onSelectionChange(next);
-  };
-
-  const handleChevronClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onFolderToggle?.(node.id);
+  const handleToggleFolder = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (isFolder) onFolderToggle?.(node.id);
   };
 
   return (
     <tr className="border-b border-border/50 transition-colors hover:bg-muted/50">
-      <td className="w-8 shrink-0 px-1 py-2">
-        <span
-          className={cn("flex items-center justify-center", ROW_CONTENT_HEIGHT)}
-        >
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={handleCheckboxChange}
-            aria-label={`Select ${node.name}`}
-          />
-        </span>
-      </td>
       <td className="px-4 py-2">
         <div
           className={cn(
@@ -167,26 +141,30 @@ const FileRow = memo(function FileRow({
         >
           {isFolder ? (
             <span
-              className="inline-flex w-fit items-center gap-2"
+              className="inline-flex w-fit cursor-pointer items-center gap-2"
               onMouseEnter={() => onFolderHover?.(node.id)}
               onMouseLeave={() => onFolderHoverCancel?.(node.id)}
+              onClick={handleToggleFolder}
+              onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") && handleToggleFolder()
+              }
+              role="button"
+              tabIndex={0}
+              aria-expanded={isExpanded}
+              aria-label={`${node.name}, folder, ${isExpanded ? "expanded" : "collapsed"}`}
             >
-              <button
-                type="button"
-                onClick={handleChevronClick}
-                className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                aria-label={isExpanded ? "Collapse" : "Expand"}
+              <span
+                className="shrink-0 rounded p-0.5 text-muted-foreground"
+                aria-hidden
               >
                 {isExpanded ? (
                   <ChevronDown className="size-4" />
                 ) : (
                   <ChevronRight className="size-4" />
                 )}
-              </button>
-              <span className="flex min-w-0 items-center gap-2 text-left">
-                <FileIcon type={node.type} name={node.name} />
-                <span className="min-w-0 truncate">{node.name}</span>
               </span>
+              <FileIcon type={node.type} name={node.name} />
+              <span className="min-w-0 truncate">{node.name}</span>
             </span>
           ) : (
             <>
@@ -232,7 +210,11 @@ const FileRow = memo(function FileRow({
               disabled={actionDisabled}
               className="h-8 gap-1.5"
             >
-              <Plus className="size-4" />
+              {indexPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Plus className="size-4" />
+              )}
               Index
             </Button>
           ) : canDeIndex ? (
@@ -243,7 +225,11 @@ const FileRow = memo(function FileRow({
               disabled={actionDisabled}
               className="h-8 gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
-              <Trash2 className="size-4" />
+              {deIndexPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
               Remove
             </Button>
           ) : null}
@@ -256,9 +242,6 @@ const FileRow = memo(function FileRow({
 function SkeletonRow({ depth }: { depth: number }) {
   return (
     <tr className="border-b border-border/50">
-      <td className="w-8 shrink-0 px-1 py-2">
-        <Skeleton className="h-8 w-4" />
-      </td>
       <td className="px-4 py-2">
         <div
           className={cn("flex items-center gap-2", ROW_CONTENT_HEIGHT)}
@@ -294,8 +277,6 @@ export function FileTable({
   onFolderHoverCancel,
   onFolderToggle,
   expandedIds,
-  selectedIds,
-  onSelectionChange,
 }: FileTableProps) {
   const indexedSet = new Set(indexedIds);
   const SortIcon = sortOrder === "asc" ? ArrowUp : ArrowDown;
@@ -305,7 +286,6 @@ export function FileTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border">
-            <th className="w-8 shrink-0 px-1 py-2" aria-hidden />
             <th className="px-4 py-2 text-left font-medium">Name</th>
             <th className="w-28 min-w-28 px-4 py-2 text-left font-medium">
               Status
@@ -316,11 +296,8 @@ export function FileTable({
         <tbody>
           {Array.from({ length: SKELETON_ROW_COUNT }).map((_, i) => (
             <tr key={`skeleton-${i}`} className="border-b border-border/50">
-              <td className="px-2 py-2">
-                <Skeleton className="h-4 w-4" />
-              </td>
               <td className="px-4 py-2">
-                <Skeleton className="h-8 w-full max-w-46" />
+                <Skeleton className="h-8 w-full max-w-48" />
               </td>
               <td className="px-4 py-2">
                 <Skeleton className="h-8 w-20" />
@@ -352,7 +329,6 @@ export function FileTable({
     <table className="w-full text-sm">
       <thead>
         <tr className="border-b border-border">
-          <th className="w-8 shrink-0 px-1 py-2" aria-hidden />
           <th
             className="px-4 py-2 text-left font-medium"
             aria-sort={sortOrder === "asc" ? "ascending" : "descending"}
@@ -386,11 +362,9 @@ export function FileTable({
               row={{ node: row.node, depth: row.depth }}
               indexedIds={indexedSet}
               expandedIds={expandedIds}
-              selectedIds={selectedIds}
               onFolderHover={onFolderHover}
               onFolderHoverCancel={onFolderHoverCancel}
               onFolderToggle={onFolderToggle}
-              onSelectionChange={onSelectionChange}
               onIndexRequest={onIndexRequest}
               onDeIndexRequest={onDeIndexRequest}
               isIndexPending={isIndexPending}
