@@ -47,6 +47,16 @@ export async function getDescendantResourceIdsAction(
   return getStackAIService().getDescendantResourceIds(resourceId);
 }
 
+export async function getDescendantResourcesWithPathsAction(
+  resourceId: string,
+  rootResourcePath: string,
+): Promise<{ resourceId: string; resourcePath: string }[]> {
+  return getStackAIService().getDescendantResourcesWithPaths(
+    resourceId,
+    rootResourcePath,
+  );
+}
+
 export async function deleteFromKnowledgeBaseAction(
   knowledgeBaseId: string,
   resourcePath: string,
@@ -55,4 +65,24 @@ export async function deleteFromKnowledgeBaseAction(
     knowledgeBaseId,
     resourcePath,
   );
+}
+
+export async function deleteFromKnowledgeBaseBatchAction(
+  knowledgeBaseId: string,
+  items: { resourceId: string; resourcePath: string }[],
+): Promise<{ successCount: number; errorCount: number }> {
+  let successCount = 0;
+  let errorCount = 0;
+  for (const { resourcePath: path } of items) {
+    try {
+      await getStackAIService().deleteFromKnowledgeBase(
+        knowledgeBaseId,
+        path,
+      );
+      successCount++;
+    } catch {
+      errorCount++;
+    }
+  }
+  return { successCount, errorCount };
 }
