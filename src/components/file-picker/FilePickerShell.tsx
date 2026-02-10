@@ -22,7 +22,6 @@ export function FilePickerShell() {
   const [searchFilter, setSearchFilter] = useState("");
 
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
-  const resources = data?.data ?? [];
 
   const isMissingEnv =
     isError &&
@@ -60,14 +59,13 @@ export function FilePickerShell() {
   );
 
   const filteredResources = useMemo(() => {
+    const resources = data?.data ?? [];
     if (!searchFilter.trim()) return resources;
     const q = searchFilter.trim().toLowerCase();
-    return resources.filter((r) => {
-      const path = r.inode_path.path.toLowerCase();
-      const name = path.split("/").pop() ?? "";
-      return name.includes(q) || path.includes(q);
-    });
-  }, [resources, searchFilter]);
+    return resources.filter((node) =>
+      node.name.toLowerCase().includes(q),
+    );
+  }, [data?.data, searchFilter]);
 
   const handleFolderOpen = useCallback(
     (id: string, name: string) => {
