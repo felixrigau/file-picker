@@ -320,13 +320,13 @@ export function FileTable({
                 <Skeleton className="h-4 w-4" />
               </td>
               <td className="px-4 py-2">
-                <Skeleton className="h-6 w-full max-w-46" />
+                <Skeleton className="h-8 w-full max-w-46" />
               </td>
               <td className="px-4 py-2">
-                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-8 w-20" />
               </td>
               <td className="px-4 py-2">
-                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-8 w-16" />
               </td>
             </tr>
           ))}

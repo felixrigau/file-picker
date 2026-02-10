@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import type { DisplayRow } from "./FileTable";
 import { FileTable } from "./FileTable";
 import { FloatingSelectionBar } from "./FloatingSelectionBar";
-import { FilterDropdown } from "./FilterDropdown";
+import { FilterPills } from "./FilterPills";
 
 /** Single breadcrumb segment: id for navigation, name for display */
 interface BreadcrumbSegment {
@@ -38,7 +38,7 @@ const STATUS_PARAM = "status";
 const TYPE_PARAM = "type";
 
 const VALID_STATUS: StatusFilter[] = ["all", "indexed", "not-indexed"];
-const VALID_TYPE: TypeFilter[] = ["all", "folder", "file"];
+const VALID_TYPE: TypeFilter[] = ["all", "folder", "file", "pdf", "csv", "txt"];
 
 function parseStatus(value: string | null): StatusFilter {
   if (value && VALID_STATUS.includes(value as StatusFilter)) {
@@ -441,9 +441,9 @@ export function FilePickerShell() {
         ))}
       </nav>
 
-      {/* Search & Filter row — Filter dropdown, Sort, name search */}
+      {/* Search & Filter row — Pill filters, name search */}
       <div className="flex flex-wrap items-center gap-2">
-        <FilterDropdown
+        <FilterPills
           status={statusFilter}
           type={typeFilter}
           onStatusChange={handleStatusChange}
@@ -455,7 +455,7 @@ export function FilePickerShell() {
           type="search"
           value={searchFilter}
           onChange={(e) => setSearchFilter(e.target.value)}
-          placeholder="Filter by name..."
+          placeholder="Search by..."
           className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
       </div>

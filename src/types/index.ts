@@ -1,8 +1,14 @@
 /** Status filter: indexed state relative to Knowledge Base */
 export type StatusFilter = "all" | "indexed" | "not-indexed";
 
-/** Type filter: folders vs files */
-export type TypeFilter = "all" | "folder" | "file";
+/** Type filter: folders, files, or extension */
+export type TypeFilter =
+  | "all"
+  | "folder"
+  | "file"
+  | "pdf"
+  | "csv"
+  | "txt";
 
 export interface FileNode {
   id: string;
