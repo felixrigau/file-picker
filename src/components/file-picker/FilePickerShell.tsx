@@ -1,12 +1,12 @@
 "use client";
 
-import { getFilesAction } from "@/app/actions/server-actions";
 import {
   useActiveKnowledgeBaseId,
   useGDriveFiles,
   useIndexedResourceIds,
   useKBActions,
 } from "@/hooks";
+import { getGDriveQueryOptions } from "@/hooks/use-gdrive-files";
 import { stackAIQueryKeys } from "@/hooks/query-keys";
 import { cn } from "@/lib/utils";
 import { applyFilters } from "@/lib/utils/filter-files";
@@ -71,6 +71,8 @@ export function FilePickerShell() {
   const [, startTransition] = useTransition();
   const queryClient = useQueryClient();
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoveredFolderIdRef = useRef<string | null>(null);
 
   const { data, isLoading, isError, error } = useGDriveFiles(currentFolderId);
   const indexedIdsRaw = useIndexedResourceIds();
@@ -192,21 +194,47 @@ export function FilePickerShell() {
   useEffect(() => {
     const toFetch = [...expandedIds].filter((id) => !childData.has(id));
     if (toFetch.length === 0) return;
+
+    const results: { id: string; data: FileNode[] }[] = [];
+    const idsToFetch: string[] = [];
+
+    for (const id of toFetch) {
+      const cached = queryClient.getQueryData<{ data: FileNode[] }>(
+        stackAIQueryKeys.gdrive(id),
+      );
+      if (cached?.data) {
+        results.push({ id, data: cached.data });
+      } else {
+        idsToFetch.push(id);
+      }
+    }
+
+    if (results.length > 0) {
+      queueMicrotask(() => {
+        setChildData((prev) => {
+          const next = new Map(prev);
+          for (const { id, data } of results) {
+            next.set(id, data);
+          }
+          return next;
+        });
+      });
+    }
+
+    if (idsToFetch.length === 0) return;
+
     let cancelled = false;
     Promise.all(
-      toFetch.map((id) =>
+      idsToFetch.map((id) =>
         queryClient
-          .fetchQuery({
-            queryKey: stackAIQueryKeys.gdrive(id),
-            queryFn: () => getFilesAction(id),
-          })
+          .fetchQuery(getGDriveQueryOptions(id))
           .then((r) => ({ id, data: r.data })),
       ),
-    ).then((results) => {
+    ).then((fetchedResults) => {
       if (cancelled) return;
       setChildData((prev) => {
         const next = new Map(prev);
-        for (const { id, data } of results) {
+        for (const { id, data } of fetchedResults) {
           next.set(id, data);
         }
         return next;
@@ -250,17 +278,24 @@ export function FilePickerShell() {
   }, [sortOrder, searchParams, router]);
 
   /** Delay before prefetch to avoid requests when cursor is just passing through */
-  const PREFETCH_DELAY_MS = 200;
+  const PREFETCH_DELAY_MS = 150;
+  /** Delay before cancelling prefetch — prevents spurious cancels from mouse jitter */
+  const PREFETCH_CANCEL_DEBOUNCE_MS = 80;
 
   const handleFolderHover = useCallback(
     (folderId: string) => {
+      hoveredFolderIdRef.current = folderId;
+
+      if (cancelTimerRef.current) {
+        clearTimeout(cancelTimerRef.current);
+        cancelTimerRef.current = null;
+      }
+
       if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
       prefetchTimerRef.current = setTimeout(() => {
         prefetchTimerRef.current = null;
-        queryClient.prefetchQuery({
-          queryKey: stackAIQueryKeys.gdrive(folderId),
-          queryFn: () => getFilesAction(folderId),
-        });
+        if (hoveredFolderIdRef.current !== folderId) return;
+        queryClient.prefetchQuery(getGDriveQueryOptions(folderId));
       }, PREFETCH_DELAY_MS);
     },
     [queryClient],
@@ -268,11 +303,17 @@ export function FilePickerShell() {
 
   const handleFolderHoverCancel = useCallback(
     (folderId: string) => {
+      hoveredFolderIdRef.current = null;
+
       if (prefetchTimerRef.current) {
         clearTimeout(prefetchTimerRef.current);
         prefetchTimerRef.current = null;
       }
-      queryClient.cancelQueries({ queryKey: stackAIQueryKeys.gdrive(folderId) });
+
+      cancelTimerRef.current = setTimeout(() => {
+        cancelTimerRef.current = null;
+        queryClient.cancelQueries({ queryKey: stackAIQueryKeys.gdrive(folderId) });
+      }, PREFETCH_CANCEL_DEBOUNCE_MS);
     },
     [queryClient],
   );
