@@ -12,8 +12,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/app/actions/server-actions", () => ({
   getConnectionIdAction: vi.fn(),
   getDescendantResourceIdsAction: vi.fn(),
+  getDescendantResourcesWithPathsAction: vi.fn(),
   syncToKnowledgeBaseAction: vi.fn(),
   deleteFromKnowledgeBaseAction: vi.fn(),
+  deleteFromKnowledgeBaseBatchAction: vi.fn(),
 }));
 
 const actions = await import("@/app/actions/server-actions");
@@ -40,6 +42,14 @@ describe("useKBActions", () => {
     vi.mocked(actions.getDescendantResourceIdsAction).mockImplementation(
       (id) => Promise.resolve([id]),
     );
+    vi.mocked(actions.getDescendantResourcesWithPathsAction).mockImplementation(
+      (id, path) =>
+        Promise.resolve([{ resourceId: id, resourcePath: path }]),
+    );
+    vi.mocked(actions.deleteFromKnowledgeBaseBatchAction).mockResolvedValue({
+      successCount: 1,
+      errorCount: 0,
+    });
   });
 
   afterEach(() => {
@@ -62,7 +72,7 @@ describe("useKBActions", () => {
 
     await act(async () => {
       result.current.indexResource.mutate({
-        node: { id: "res-1", type: "file" },
+        node: { id: "res-1", name: "file.pdf", type: "file" },
         expandedIds: ["res-1", "res-2"],
       });
     });
@@ -97,7 +107,7 @@ describe("useKBActions", () => {
 
     await act(async () => {
       result.current.indexResource.mutate({
-        node: { id: "res-new", type: "file" },
+        node: { id: "res-new", name: "new.pdf", type: "file" },
         expandedIds: ["res-new"],
       });
     });
@@ -127,7 +137,7 @@ describe("useKBActions", () => {
 
     await act(async () => {
       result.current.indexResource.mutate({
-        node: { id: "res-1", type: "file" },
+        node: { id: "res-1", name: "file.pdf", type: "file" },
         expandedIds: ["res-1"],
       });
     });
