@@ -41,6 +41,12 @@ export async function syncToKnowledgeBaseAction(
   );
 }
 
+export async function getDescendantResourceIdsAction(
+  resourceId: string,
+): Promise<string[]> {
+  return getStackAIService().getDescendantResourceIds(resourceId);
+}
+
 export async function deleteFromKnowledgeBaseAction(
   knowledgeBaseId: string,
   resourcePath: string,

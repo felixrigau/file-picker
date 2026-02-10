@@ -244,6 +244,35 @@ export class StackAIService {
   }
 
   /**
+   * Recursively fetches all descendant resource IDs for a folder (including the folder itself).
+   * For files (no children), returns [resourceId]. Used to populate indexedIds for UI when
+   * indexing a folder so all contents appear as Indexed.
+   * @param resourceId - Resource id (folder or file)
+   * @returns Array of resourceId + all descendant ids (for folders)
+   * @throws Error when auth fails or API errors
+   */
+  async getDescendantResourceIds(resourceId: string): Promise<string[]> {
+    const ids = new Set<string>([resourceId]);
+    try {
+      const response = await this.fetchGDriveContents(resourceId);
+      const children = response.data ?? [];
+
+      for (const child of children) {
+        ids.add(child.resource_id);
+        if (child.inode_type === "directory") {
+          const descendantIds = await this.getDescendantResourceIds(
+            child.resource_id,
+          );
+          descendantIds.forEach((id) => ids.add(id));
+        }
+      }
+    } catch {
+      // File or empty folder: return only the resource itself
+    }
+    return [...ids];
+  }
+
+  /**
    * Removes a resource from a knowledge base by path (de-indexing).
    * @param knowledgeBaseId - Id of the knowledge base (e.g. from syncToKnowledgeBase)
    * @param resourcePath - Path of the resource to remove (e.g. "papers/self_rag.pdf")
