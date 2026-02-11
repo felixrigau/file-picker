@@ -8,12 +8,17 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "no-console": ["warn", { allow: ["warn", "error"] }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_" },
+      ],
     },
   },
   globalIgnores([
     ".next/**",
     "out/**",
     "build/**",
+    "coverage/**",
     "next-env.d.ts",
     "docs/api-reference/**",
     "types/**",

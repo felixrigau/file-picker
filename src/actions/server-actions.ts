@@ -3,7 +3,7 @@
 /**
  * Barrel file — re-exports all server actions for backward compatibility.
  * Actions are split by responsibility:
- * - files.actions.ts — File resources (GDrive listing, descendants)
+ * - files.actions.ts — File resources (Google Drive listing, descendants)
  * - connection.actions.ts — Connection ID
  * - knowledge-base.actions.ts — Indexing, sync, delete
  */

@@ -1,5 +1,5 @@
 import type { ApiResource } from "@/infra/types/api-types";
-import type { FileNode, PaginatedFileNodes } from "@/domain/types/domain";
+import type { FileNode, PaginatedFileNodes } from "@/domain/types";
 import type { FileResourceRepository } from "@/domain/ports/file-resource-repository.port";
 
 /**

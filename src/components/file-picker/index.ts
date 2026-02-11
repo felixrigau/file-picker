@@ -1,2 +1,3 @@
-export { FilePickerShell } from "./FilePickerShell";
-export { FileTable } from "./FileTable";
+export { FilePicker } from "./FilePicker";
+export { FilePickerGoogleDriveContainer } from "./FilePickerGoogleDriveContainer";
+export type { FilePickerProps } from "./FilePicker.types";

@@ -35,7 +35,7 @@ Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle si
 
 ### 3. State Management
 
-- **Server State:** Handled by TanStack Query. Query keys must be unique and serializable (via `query-keys.ts`).
+- **Server State:** Handled by TanStack Query. Query keys must be unique and serializable (via `@/utils/query-keys.ts`).
 - **Optimistic UI:** Required for Index/De-index/Delete actions. Use `onMutate` + `rollback` on error.
 - **Derived State:** Never store what can be calculated. Derive `filteredFiles` from `files` + `searchQuery`.
 
@@ -43,7 +43,8 @@ Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle si
 
 - `@/app/actions/`: Thin wrappers that obtain repos from DI Container and call use cases.
 - `@/domain/use-cases/`: Pure use cases receiving repos as parameters. Unit test these directly.
-- `@/hooks/`: Modular hooks (e.g., `use-gdrive-files.ts`). Exported from `index.ts`.
+- `@/hooks/`: Modular hooks (e.g., `use-google-drive-files.ts`). Exported from `index.ts`.
+- `@/utils/`: Query keys and other shared utilities (e.g., `query-keys.ts`).
 - `@/infra/`: Adapters, types (API), mappers, DI Container, http-client. See docs/DI_CONTAINER.md.
 - `@/domain/`: Types, ports, use cases. Domain layer.
 - `@/view/`: View-layer utilities (e.g., `utils.ts` with `cn()` for Tailwind).
