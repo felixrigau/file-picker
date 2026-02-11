@@ -5,7 +5,7 @@ import {
   getConnectionRepository,
   getFileResourceRepository,
   getKnowledgeBaseRepository,
-} from "@/lib/container";
+} from "@/lib/di-container";
 import type { IndexingParams } from "@/types/api";
 import type { PaginatedFileNodes } from "@/types/domain";
 

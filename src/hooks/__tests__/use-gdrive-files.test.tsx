@@ -4,7 +4,7 @@ import type { FileNode, PaginatedFileNodes } from "@/types/domain";
 import { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetRepositories, setRepositories } from "@/lib/container";
+import { resetRepositories, setRepositories } from "@/lib/di-container";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,

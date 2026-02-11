@@ -1,8 +1,8 @@
 /**
- * Composition root — wires ports with adapters.
- * Singleton instances. Used by Server Actions (use cases).
+ * DI Container (Dependency Injection) — composition root.
+ * Wires ports with adapters. Singleton instances. Used by Server Actions (use cases).
  *
- * @see docs/REFACTOR_PORTS_ADAPTERS_PROMPT.md
+ * @see docs/DI_CONTAINER.md
  */
 
 import { HttpClient } from "./http-client";
@@ -86,10 +86,10 @@ export function resetRepositories(): void {
 
 /**
  * Composition root — explicitly wires all adapters (eager init).
- * Idempotent. Import this module at app startup so the container is initialized.
- * @see docs/CONTAINER.md
+ * Idempotent. Import this module at app startup so the DI Container is initialized.
+ * @see docs/DI_CONTAINER.md
  */
-export function bootstrapContainer(): void {
+export function bootstrapDIContainer(): void {
   getAuthRepository();
   getConnectionRepository();
   getFileResourceRepository();

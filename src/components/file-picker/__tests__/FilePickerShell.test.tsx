@@ -10,7 +10,7 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetRepositories, setRepositories } from "@/lib/container";
+import { resetRepositories, setRepositories } from "@/lib/di-container";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,
@@ -48,7 +48,7 @@ function mockFileNode(
   return { id, name, type, updatedAt: "", isIndexed: false, ...overrides };
 }
 
-function setupContainer(options: {
+function setupDIContainer(options: {
   fileRepo?: FileResourceRepositoryTestImpl;
   connectionId?: string;
   kbId?: string;
@@ -79,7 +79,7 @@ describe("FilePickerShell", () => {
 
   describe("Initial visualization", () => {
     it("should display folders and files returned from the service", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("folder-1", "Documents", "folder"),
           mockFileNode("folder-2", "Projects", "folder"),
@@ -101,7 +101,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should display an error message and a retry button when loading files and folders fails", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.withQueue([
           { __throw: new Error("Network error") },
         ]),
@@ -119,7 +119,7 @@ describe("FilePickerShell", () => {
 
   describe("Filters and sorting", () => {
     it("should only display folders when filtering by folder", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Documents", "folder"),
           mockFileNode("f2", "readme.pdf", "file"),
@@ -134,7 +134,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should only display files of a type when filtering by that file type", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "doc.pdf", "file"),
           mockFileNode("f2", "data.csv", "file"),
@@ -151,7 +151,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should display only indexed files and/or folders when filtering by Indexed", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
           mockFileNode("f2", "Not Indexed", "file"),
@@ -166,7 +166,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should display only not-indexed files and/or folders when filtering by Not Indexed", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
           mockFileNode("f2", "Not Indexed", "file"),
@@ -181,7 +181,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should be able to clear filters after filtering", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Documents", "folder"),
           mockFileNode("f2", "readme.pdf", "file"),
@@ -203,7 +203,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should display only files and/or folders that match the text entered in the search input", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "alpha.pdf", "file"),
           mockFileNode("f2", "beta.txt", "file"),
@@ -226,7 +226,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should display files and folders sorted A-Z and after clicking the sort button, see them sorted Z-A", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Alpha", "file"),
           mockFileNode("f2", "Beta", "file"),
@@ -267,7 +267,7 @@ describe("FilePickerShell", () => {
 
   describe("Folder / children", () => {
     it("should display a skeleton of rows inside a folder when expanding that folder and then see its content", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
           [
             mockFileNode("folder-1", "Documents", "folder"),
@@ -292,7 +292,7 @@ describe("FilePickerShell", () => {
     });
 
     it("should be able to collapse a folder and not see its content", async () => {
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
           [mockFileNode("folder-1", "Documents", "folder")],
           [mockFileNode("child-1", "report.pdf", "file")],
@@ -320,7 +320,7 @@ describe("FilePickerShell", () => {
         [mockFileNode("folder-1", "Documents", "folder")],
         [mockFileNode("child-1", "cached-file.pdf", "file")],
       );
-      setupContainer({ fileRepo });
+      setupDIContainer({ fileRepo });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -362,7 +362,7 @@ describe("FilePickerShell", () => {
         [fileNode],
         [fileNode],
       );
-      setupContainer({ fileRepo });
+      setupDIContainer({ fileRepo });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -397,7 +397,7 @@ describe("FilePickerShell", () => {
         isIndexed: false,
         resourcePath: "docs/document.pdf",
       });
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
           [fileNode],
           [fileNode],
@@ -444,7 +444,7 @@ describe("FilePickerShell", () => {
       const folderNode = mockFileNode("folder-1", "Documents", "folder", {
         resourcePath: "Documents",
       });
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
           [folderNode],
           [folderNode],
@@ -481,7 +481,7 @@ describe("FilePickerShell", () => {
         isIndexed: false,
         resourcePath: "Documents",
       });
-      setupContainer({
+      setupDIContainer({
         fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
           [folderNode],
           [folderNode],

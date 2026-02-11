@@ -4,7 +4,7 @@ Ports & Adapters architecture for backend API access. This guide covers setup, u
 
 ## Overview
 
-Data access is abstracted behind **ports** (interfaces). The **container** wires adapters (implementations) and exposes them via getters. Use only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
+Data access is abstracted behind **ports** (interfaces). The **DI Container** wires adapters (implementations) and exposes them via getters. Use only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ import {
   getConnectionRepository,
   getFileResourceRepository,
   getKnowledgeBaseRepository,
-} from "@/lib/container";
+} from "@/lib/di-container";
 ```
 
 ## Examples
@@ -70,7 +70,7 @@ Expose via a Route Handler so the client can call it with TanStack Query:
 
 ```ts
 // app/api/drive/route.ts
-import { getFileResourceRepository } from "@/lib/container";
+import { getFileResourceRepository } from "@/lib/di-container";
 import { mapPaginatedApiResponseToResult } from "@/lib/api-mappers";
 
 export async function GET(request: Request) {
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
 }
 ```
 
-For full details on **initialization**, **dependency injection**, and **test setup**, see [docs/CONTAINER.md](./CONTAINER.md).
+For full details on **initialization**, **dependency injection**, and **test setup**, see [docs/DI_CONTAINER.md](./DI_CONTAINER.md).
 
 ## Test Implementations
 
@@ -99,7 +99,7 @@ import {
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
 } from "@/lib/adapters/test";
-import { resetRepositories, setRepositories } from "@/lib/container";
+import { resetRepositories, setRepositories } from "@/lib/di-container";
 
 beforeEach(() => {
   resetRepositories();
