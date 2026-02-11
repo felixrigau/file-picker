@@ -10,6 +10,7 @@ export class KnowledgeBaseRepositoryTestImpl implements KnowledgeBaseRepository 
   readonly syncCalls: Array<{
     connectionId: string;
     resourceIds: string[];
+    orgId: string;
     indexingParams?: Partial<IndexingParams>;
   }> = [];
   readonly deleteCalls: Array<{
@@ -51,9 +52,10 @@ export class KnowledgeBaseRepositoryTestImpl implements KnowledgeBaseRepository 
   async sync(
     connectionId: string,
     resourceIds: string[],
+    orgId: string,
     indexingParams?: Partial<IndexingParams>,
   ): Promise<{ knowledge_base_id: string }> {
-    this.syncCalls.push({ connectionId, resourceIds, indexingParams });
+    this.syncCalls.push({ connectionId, resourceIds, orgId, indexingParams });
     if (this.syncMode === "pending") {
       return new Promise((resolve, reject) => {
         this.pendingSync = { resolve, reject };

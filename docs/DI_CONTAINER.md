@@ -60,17 +60,19 @@ There are two flows:
                                        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  infra/modules/di-container.ts                                            │
-│  infra/modules/http-client.ts (singleton, used by adapters)               │
+│  infra/modules/http-client.ts (uses AuthRepositoryImpl directly)          │
 │                                                                          │
-│  authRepository         = AuthRepositoryImpl()                           │
-│  connectionRepository  = ConnectionRepositoryImpl(httpClient, ...)       │
-│  fileResourceRepository = FileResourceRepositoryImpl(...)                 │
-│  knowledgeBaseRepository = KnowledgeBaseRepositoryImpl(...)               │
+│  authRepository         = AuthRepositoryImpl()  (getOrganizationId)       │
+│  httpClient             = HttpClient()  (creates AuthRepositoryImpl        │
+│                          internally for getAccessToken)                   │
+│  connectionRepository   = ConnectionRepositoryImpl(httpClient)            │
+│  fileResourceRepository = FileResourceRepositoryImpl(httpClient, ...)    │
+│  knowledgeBaseRepository = KnowledgeBaseRepositoryImpl(httpClient)        │
 └──────────────────────────────────┬───────────────────────────────────────┘
                                    │ get*Repository() returns instances
                                    ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  app/actions/ (barrel: server-actions.ts)                                │
+│  src/actions/ (barrel: server-actions.ts)                               │
 │  files.actions.ts | connection.actions.ts | knowledge-base.actions.ts    │
 │  getConnectionIdAction() → getConnectionIdUseCase(getConnectionRepo())    │
 │  ...                                                                     │
@@ -122,27 +124,39 @@ afterEach(() => {
 
 ---
 
-## 5. Infra folder structure
+## 5. Infra design: no ports between components
+
+Within the infra layer, adapters use concrete implementations directly — no ports or adapters between infra components:
+
+- **HttpClient** creates `AuthRepositoryImpl` internally for token-based requests. No dependency injection.
+- **Adapters** (ConnectionRepositoryImpl, FileResourceRepositoryImpl, KnowledgeBaseRepositoryImpl) receive `HttpClient` directly.
+- **authRepository** in the container is used by the sync use case (`getOrganizationId`), not by HttpClient.
+
+Ports and adapters exist only at the **domain boundary**: use cases depend on repository ports; infra adapters implement those ports.
+
+---
+
+## 6. Infra folder structure
 
 ```
 src/infra/
 ├── adapters/        # API implementations (api/) and test doubles (test/)
-├── config/          # env.ts (getEnv)
 ├── mappers/         # api-mappers.ts (API → domain mapping)
 ├── modules/         # DI Container, HttpClient, init bootstrap
 │   ├── di-container.ts
 │   ├── di-container.init.ts
 │   └── http-client.ts
-└── types/           # api-types.ts (API/transport types)
+├── types/           # api-types.ts (API/transport types)
+└── utils/           # get-env.ts (getEnv)
 ```
 
 ---
 
-## 6. DI Container API
+## 7. DI Container API
 
 | Function                       | Usage                                                 |
 | ------------------------------ | ----------------------------------------------------- |
-| `getAuthRepository()`          | Get the Auth port (used internally by other adapters) |
+| `getAuthRepository()`          | Get the Auth port (used by sync use case for getOrganizationId) |
 | `getConnectionRepository()`    | Get the GDrive connections port                       |
 | `getFileResourceRepository()`  | Get the file resources port                           |
 | `getKnowledgeBaseRepository()` | Get the knowledge base port                           |

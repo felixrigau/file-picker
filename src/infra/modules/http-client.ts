@@ -1,32 +1,20 @@
-import type { AuthRepository } from "@/domain/ports/auth-repository.port";
+import { AuthRepositoryImpl } from "../adapters/api/auth-repository.impl";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
 /**
- * Authenticated HTTP client. Singleton.
- * Depends on AuthRepository for Bearer token.
+ * Authenticated HTTP client. Uses AuthRepositoryImpl directly — no ports/adapters.
+ * Adapters use HttpClient directly.
  */
 export class HttpClient {
-  private static instance: HttpClient | null = null;
-  private constructor(private readonly authRepository: AuthRepository) {}
-
-  static getInstance(authRepository: AuthRepository): HttpClient {
-    if (HttpClient.instance === null) {
-      HttpClient.instance = new HttpClient(authRepository);
-    }
-    return HttpClient.instance;
-  }
-
-  static resetInstance(): void {
-    HttpClient.instance = null;
-  }
+  private readonly auth = new AuthRepositoryImpl();
 
   async request<T>(
     method: string,
     url: string,
     init: RequestInit = {},
   ): Promise<T> {
-    const token = await this.authRepository.getAccessToken();
+    const token = await this.auth.getAccessToken();
 
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);

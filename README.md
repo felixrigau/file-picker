@@ -1,36 +1,208 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# File Picker
 
-## Getting Started
+File picker with knowledge base indexing. Navigate folders, filter, sort, and index/de-index files and folders.
 
-First, run the development server:
+## Run locally
 
 ```bash
+# Install dependencies
+npm install
+
+# Configure environment variables
+cp .env.example .env.local
+# Edit .env.local with your credentials (see Environment variables)
+
+# Development mode
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Environment variables** (see `.env.example`):  
+`NEXT_PUBLIC_STACK_AI_ANON_KEY`, `STACK_AI_EMAIL`, `STACK_AI_PASSWORD`, `STACK_AI_SUPABASE_AUTH_URL`, `STACK_AI_BACKEND_URL`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Script                  | Description                    |
+| ----------------------- | ------------------------------ |
+| `npm run dev`           | Development server             |
+| `npm run build`         | Production build               |
+| `npm run start`         | Production server              |
+| `npm run test`          | Tests (watch)                  |
+| `npm run test:run`      | Tests (single run)             |
+| `npm run test:coverage` | Tests with coverage            |
+| `npm run check`          | Lint + type-check + tests      |
+| `npm run docs:generate`  | Generate Typedoc documentation |
+| `npm run audit:ci`       | Run Lighthouse CI (builds, runs audit, uploads reports) |
+| `npm run audit:lighthouse` | Instructions for manual Lighthouse via Chrome DevTools |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Lighthouse
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Command:** `npm run audit:ci` — builds, audits [production URL](https://file-picker-smoky.vercel.app/), uploads reports.
 
-## Deploy on Vercel
+**Results:** local → `.lighthouseci/*.html`; CI → **Actions → Artifacts → lighthouse-reports** (7 days); logs → temporary public URL.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Target metrics** (`lighthouserc.js`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Metric | Target |
+|--------|--------|
+| Performance | ≥ 0.95 |
+| Accessibility | = 1.0 |
+| Best practices | = 1.0 |
+| Cumulative Layout Shift (CLS) | ≤ 0.05 |
+
+---
+
+## CI (GitHub Actions)
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) — triggers on push/PR to `master`.
+
+| Job | Description |
+|-----|-------------|
+| Lint | ESLint |
+| Type Check | `npm run type-check` |
+| Test | Vitest (`npm run test:run`) |
+| Lighthouse CI | Audit on push to `master` only; artifact `lighthouse-reports` (7 days). |
+
+Node 20, `npm ci`.
+
+---
+
+## Development flows
+
+1. **Implement features (including bonus)** — features and refinements.
+2. **Implement integration tests** — before refactoring, to build confidence.
+3. **Refactor** — improve maintainability, extensibility, and scalability while keeping tests green.
+
+---
+
+## Server Actions decisions
+
+**Server Actions** replace API Routes. Benefits: type safety end-to-end, no CORS, automatic serialization, credentials on server (client never touches repos or APIs).
+
+---
+
+## TanStack Query caching
+
+- **Per-folder cache**: content loaded once per folder (staleTime 1 min, gcTime 5 min).
+- **Selective invalidation**: index/de-index mutations only invalidate Google Drive queries in `onSettled` to refresh `isIndexed`.
+
+---
+
+## UI/UX decisions
+
+- **Optimistic UI** for index/de-index: immediate state update, rollback on error.
+- **Prefetch on hover**: collapsed folder content preloads after 150ms hover.
+- **Clear UX**: descriptive button labels, icons per file type, explicit "Indexed"/"Not indexed" states.
+- **Skeleton loading** to avoid layout shift (CLS).
+
+---
+
+## Testing decisions
+
+- **Unit tests**: use cases and utilities in `domain/use-cases/**/*.use-case.test.ts`; pass test implementations, no network.
+- **Integration tests**: main flows (listing, filters, sorting, expand, index/de-index) via DI with `FileResourceRepositoryTestImpl`, `KnowledgeBaseRepositoryTestImpl`.
+
+---
+
+## Architecture
+
+Hexagonal architecture with **SRP**, **Open/Closed**, and **dependency inversion**. The view does not depend on data access; ports can be implemented with REST, GraphQL, WebSocket, etc.
+
+### Data flow
+
+```
+UI (components)
+    │
+    ▼
+Custom Hooks (TanStack Query, orchestration)
+    │
+    ▼
+Server Actions (thin wrappers)
+    │
+    ▼
+Use Cases (pure business logic)
+    │
+    ▼
+Ports (interfaces)
+    ▲
+    │
+Adapters (implementations)
+    └── DI Container ← injects API impl or Test impl
+```
+
+### Diagram
+
+```mermaid
+flowchart TB
+    subgraph View
+        UI[UI Components]
+        Hooks[Hooks]
+    end
+
+    subgraph Application
+        Actions[Server Actions]
+        UseCases[Use Cases]
+    end
+
+    subgraph Domain
+        Ports[Ports]
+    end
+
+    subgraph Infrastructure
+        APIAdapters[API Adapters]
+        TestAdapters[Test Adapters]
+    end
+
+    UI --> Hooks
+    Hooks --> Actions
+    Actions --> UseCases
+    UseCases --> Ports
+    Ports <--> APIAdapters
+    Ports <--> TestAdapters
+
+    DIC[DI Container] -.-> APIAdapters
+    DIC -.-> TestAdapters
+```
+
+### Business logic isolation in use cases
+
+Domain logic lives in `domain/use-cases/` as pure functions. Examples: `sortFilesUseCase` (A–Z, folders first), `applyFilesFiltersUseCase` (text, type, status), `validateIndexResourceUseCase`, `parseStatusUseCase` / `parseTypeUseCase` / `parseSortOrderUseCase`, `getDescendantResourceIdsUseCase`. UI and hooks only emit events and display data.
+
+### Decoupling benefits
+
+Ports can be swapped (REST, GraphQL, WebSocket, mock) without changing the view. New sources (Dropbox, OneDrive) require only new adapters. See [docs/DI_CONTAINER.md](docs/DI_CONTAINER.md).
+
+---
+
+## Project structure
+
+| Folder            | Responsibility                              |
+| ----------------- | ------------------------------------------- |
+| `src/app/`        | App Router, layout, page                    |
+| `src/actions/`    | Server Actions (wrappers that inject repos) |
+| `src/components/` | UI (file-picker, file-table, filter-bar)    |
+| `src/domain/`     | Types, ports, use cases                     |
+| `src/hooks/`      | Server state logic (TanStack Query)         |
+| `src/infra/`      | Adapters (API, test), mappers, DI Container |
+| `src/test/`       | Test setup and utilities                    |
+
+---
+
+## Possible improvements
+
+- **Multiple view modes** — list view, large icons (grid) beside the tree view.
+- **Error Boundary** — fallback on render errors.
+- **Sentry** — production error monitoring.
+- **Persistent cache** — indexed IDs in localStorage to survive reloads.
+- **E2E (Playwright)** — full flows (login → navigation → indexing).
+- **Storybook**, **i18n**, **a11y** (axe-core, keyboard, screen readers).
+
+---
+
+## References
+
+- [docs/DI_CONTAINER.md](docs/DI_CONTAINER.md) — DI Container and composition
+- [docs/API_GUIDE.md](docs/API_GUIDE.md) — repository and API usage

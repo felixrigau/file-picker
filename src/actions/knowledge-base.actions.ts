@@ -5,7 +5,10 @@ import {
   deleteFromKnowledgeBaseUseCase,
   syncToKnowledgeBaseUseCase,
 } from "@/domain/use-cases";
-import { getKnowledgeBaseRepository } from "@/infra/modules/di-container";
+import {
+  getAuthRepository,
+  getKnowledgeBaseRepository,
+} from "@/infra/modules/di-container";
 import type { IndexingParams } from "@/infra/types/api-types";
 
 export async function syncToKnowledgeBaseAction(
@@ -14,6 +17,7 @@ export async function syncToKnowledgeBaseAction(
   indexingParams?: Partial<IndexingParams>,
 ): Promise<{ knowledge_base_id: string }> {
   return syncToKnowledgeBaseUseCase(
+    getAuthRepository(),
     getKnowledgeBaseRepository(),
     connectionId,
     resourceIds,
