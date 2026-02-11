@@ -13,7 +13,7 @@
 - **Core:** Next.js 16 (App Router), React 19, TS Strict.
 - **Data:** TanStack Query v5 + Server Actions ("use server"). **No API Routes.**
 - **UI:** Tailwind CSS, Shadcn UI, Lucide Icons.
-- **Testing:** Vitest + RTL. Mock `@/app/actions/server-actions` for hook tests.
+- **Testing:** Vitest + RTL. Use DI Container with test impls (`setRepositories`) for integration tests. Unit test use cases directly with test impls.
 
 ## React/Next.js Performance
 
@@ -41,16 +41,19 @@ Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle si
 
 ## 📂 Project Map
 
-- `@/app/actions/`: Entry point for Server-side logic (Wraps `ApiService`).
+- `@/app/actions/`: Thin wrappers that obtain repos from DI Container and call use cases.
+- `@/domain/use-cases/`: Pure use cases receiving repos as parameters. Unit test these directly.
 - `@/hooks/`: Modular hooks (e.g., `use-gdrive-files.ts`). Exported from `index.ts`.
 - `@/infra/`: Adapters, types (API), mappers, DI Container, http-client. See docs/DI_CONTAINER.md.
-- `@/domain/`: Types (domain), ports (interfaces). Domain layer.
+- `@/domain/`: Types, ports, use cases. Domain layer.
 - `@/view/`: View-layer utilities (e.g., `utils.ts` with `cn()` for Tailwind).
 - `@/domain/types`: Domain types (View layer). Flow: API → Domain → View. View imports only from `@/domain/types`. Avoid `any`.
 - `@/infra/types`: API (transport) types. Used only by adapters and mappers. Never import in View layer.
 
 ## 🧪 Testing Protocol
 
-- Use `renderHook` + `waitFor`.
+- **Integration tests:** Use DI Container — `resetRepositories()` + `setRepositories()` with test impls in `beforeEach`. Hooks/components call real server actions; repos are injected.
+- **Use case unit tests:** Call use cases directly, passing test impls (e.g. `FileResourceRepositoryTestImpl`, `KnowledgeBaseRepositoryTestImpl`) as parameters.
+- Use `renderHook` + `waitFor` for hook tests.
 - Wrapper: `createWrapper(queryClient)` must be used.
 - Clear cache: `queryClient.clear()` in `afterEach`.

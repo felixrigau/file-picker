@@ -1,11 +1,11 @@
-import type { ApiResource, PaginatedApiResponse } from "@/infra/types/api-types";
+import type { PaginatedFileNodes } from "@/domain/types";
 
 /**
  * Port: File resource — GDrive files/folders listing and traversal.
- * Implementations may use API, local cache, or mocks for tests.
+ * Implementations return domain types; mapping happens inside the repository.
  */
 export interface FileResourceRepository {
-  fetchContents(folderId?: string): Promise<PaginatedApiResponse<ApiResource>>;
+  fetchContents(folderId?: string): Promise<PaginatedFileNodes>;
   getDescendantIds(resourceId: string): Promise<string[]>;
   getDescendantPaths(
     resourceId: string,

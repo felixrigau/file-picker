@@ -18,7 +18,7 @@ import {
 
 function setupDIContainer(options: {
   kbRepo?: KnowledgeBaseRepositoryTestImpl;
-  fileRepo?: FileResourceRepositoryTestImpl;
+  fileResourceRepository?: FileResourceRepositoryTestImpl;
   connectionId?: string;
 } = {}): void {
   setRepositories({
@@ -27,7 +27,7 @@ function setupDIContainer(options: {
       options.connectionId ?? "conn-1",
     ),
     fileResourceRepository:
-      options.fileRepo ?? new FileResourceRepositoryTestImpl(),
+      options.fileResourceRepository ?? new FileResourceRepositoryTestImpl(),
     knowledgeBaseRepository:
       options.kbRepo ?? new KnowledgeBaseRepositoryTestImpl("kb-1"),
   });

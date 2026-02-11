@@ -29,9 +29,9 @@ import {
 ### List root of Google Drive
 
 ```ts
-const fileRepo = getFileResourceRepository();
-const response = await fileRepo.fetchContents();
-// response: { data: ApiResource[], next_cursor, current_cursor }
+const fileResourceRepository = getFileResourceRepository();
+const response = await fileResourceRepository.fetchContents();
+// response: PaginatedFileNodes (domain)
 ```
 
 ### Navigate to a folder (by resource_id)
@@ -71,16 +71,11 @@ Expose via a Route Handler so the client can call it with TanStack Query:
 ```ts
 // app/api/drive/route.ts
 import { getFileResourceRepository } from "@/infra/modules/di-container";
-import { mapPaginatedApiResponseToResult } from "@/infra/mappers/api-mappers";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const apiResponse = await getFileResourceRepository().fetchContents(
-    searchParams.get("folderId") ?? undefined
-  );
-  const domainResult = mapPaginatedApiResponseToResult(
-    apiResponse,
-    searchParams.get("folderId") ?? undefined
+  const domainResult = await getFileResourceRepository().fetchContents(
+    searchParams.get("folderId") ?? undefined,
   );
   return Response.json(domainResult);
 }

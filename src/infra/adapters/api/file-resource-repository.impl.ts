@@ -2,6 +2,7 @@ import type { ApiResource, PaginatedApiResponse } from "@/infra/types/api-types"
 import type { HttpClient } from "../../modules/http-client";
 import type { ConnectionRepository } from "@/domain/ports/connection-repository.port";
 import type { FileResourceRepository } from "@/domain/ports/file-resource-repository.port";
+import { mapPaginatedApiResponseToResult } from "@/infra/mappers/api-mappers";
 
 const BACKEND_URL = "https://api.stack-ai.com";
 
@@ -11,30 +12,30 @@ export class FileResourceRepositoryImpl implements FileResourceRepository {
     private readonly connectionRepository: ConnectionRepository,
   ) {}
 
-  async fetchContents(
-    folderId?: string,
-  ): Promise<PaginatedApiResponse<ApiResource>> {
+  async fetchContents(folderId?: string) {
     const connectionId = await this.connectionRepository.getConnectionId();
     const baseUrl = `${BACKEND_URL}/v1/connections/${connectionId}/resources/children`;
     const url = folderId
       ? `${baseUrl}?${new URLSearchParams({ resource_id: folderId }).toString()}`
       : baseUrl;
-    return this.httpClient.request<PaginatedApiResponse<ApiResource>>(
-      "GET",
-      url,
-    );
+    const apiResponse =
+      await this.httpClient.request<PaginatedApiResponse<ApiResource>>(
+        "GET",
+        url,
+      );
+    return mapPaginatedApiResponseToResult(apiResponse, folderId);
   }
 
   async getDescendantIds(resourceId: string): Promise<string[]> {
     const ids = new Set<string>([resourceId]);
     try {
       const response = await this.fetchContents(resourceId);
-      const children = response.data ?? [];
+      const children = response.items ?? [];
 
       for (const child of children) {
-        ids.add(child.resource_id);
-        if (child.inode_type === "directory") {
-          const descendantIds = await this.getDescendantIds(child.resource_id);
+        ids.add(child.id);
+        if (child.type === "folder") {
+          const descendantIds = await this.getDescendantIds(child.id);
           descendantIds.forEach((id) => ids.add(id));
         }
       }
@@ -53,17 +54,14 @@ export class FileResourceRepositoryImpl implements FileResourceRepository {
     ];
     try {
       const response = await this.fetchContents(resourceId);
-      const children = response.data ?? [];
+      const children = response.items ?? [];
 
       for (const child of children) {
-        const path = child.inode_path?.path;
+        const path = child.resourcePath;
         if (path) {
-          result.push({ resourceId: child.resource_id, resourcePath: path });
-          if (child.inode_type === "directory") {
-            const childResults = await this.getDescendantPaths(
-              child.resource_id,
-              path,
-            );
+          result.push({ resourceId: child.id, resourcePath: path });
+          if (child.type === "folder") {
+            const childResults = await this.getDescendantPaths(child.id, path);
             result.push(...childResults.slice(1));
           }
         }

@@ -49,7 +49,7 @@ function mockFileNode(
 }
 
 function setupDIContainer(options: {
-  fileRepo?: FileResourceRepositoryTestImpl;
+  fileResourceRepository?: FileResourceRepositoryTestImpl;
   connectionId?: string;
   kbId?: string;
   kbRepo?: KnowledgeBaseRepositoryTestImpl;
@@ -60,7 +60,7 @@ function setupDIContainer(options: {
       options.connectionId ?? "conn-1",
     ),
     fileResourceRepository:
-      options.fileRepo ??
+      options.fileResourceRepository ??
       FileResourceRepositoryTestImpl.fromFileNodes([mockFileNode("empty", "")]),
     knowledgeBaseRepository:
       options.kbRepo ?? new KnowledgeBaseRepositoryTestImpl(options.kbId ?? "kb-1"),
@@ -80,7 +80,7 @@ describe("FilePickerShell", () => {
   describe("Initial visualization", () => {
     it("should display folders and files returned from the service", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("folder-1", "Documents", "folder"),
           mockFileNode("folder-2", "Projects", "folder"),
           mockFileNode("file-1", "readme.pdf", "file"),
@@ -102,7 +102,7 @@ describe("FilePickerShell", () => {
 
     it("should display an error message and a retry button when loading files and folders fails", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.withQueue([
+        fileResourceRepository: FileResourceRepositoryTestImpl.withQueue([
           { __throw: new Error("Network error") },
         ]),
       });
@@ -120,7 +120,7 @@ describe("FilePickerShell", () => {
   describe("Filters and sorting", () => {
     it("should only display folders when filtering by folder", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Documents", "folder"),
           mockFileNode("f2", "readme.pdf", "file"),
         ]),
@@ -135,7 +135,7 @@ describe("FilePickerShell", () => {
 
     it("should only display files of a type when filtering by that file type", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "doc.pdf", "file"),
           mockFileNode("f2", "data.csv", "file"),
           mockFileNode("f3", "notes.txt", "file"),
@@ -152,7 +152,7 @@ describe("FilePickerShell", () => {
 
     it("should display only indexed files and/or folders when filtering by Indexed", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
           mockFileNode("f2", "Not Indexed", "file"),
         ]),
@@ -167,7 +167,7 @@ describe("FilePickerShell", () => {
 
     it("should display only not-indexed files and/or folders when filtering by Not Indexed", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
           mockFileNode("f2", "Not Indexed", "file"),
         ]),
@@ -182,7 +182,7 @@ describe("FilePickerShell", () => {
 
     it("should be able to clear filters after filtering", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Documents", "folder"),
           mockFileNode("f2", "readme.pdf", "file"),
         ]),
@@ -204,7 +204,7 @@ describe("FilePickerShell", () => {
 
     it("should display only files and/or folders that match the text entered in the search input", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "alpha.pdf", "file"),
           mockFileNode("f2", "beta.txt", "file"),
           mockFileNode("f3", "alpha-backup.pdf", "file"),
@@ -227,7 +227,7 @@ describe("FilePickerShell", () => {
 
     it("should display files and folders sorted A-Z and after clicking the sort button, see them sorted Z-A", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
           mockFileNode("f1", "Alpha", "file"),
           mockFileNode("f2", "Beta", "file"),
           mockFileNode("f3", "Gamma", "file"),
@@ -268,7 +268,7 @@ describe("FilePickerShell", () => {
   describe("Folder / children", () => {
     it("should display a skeleton of rows inside a folder when expanding that folder and then see its content", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(
           [
             mockFileNode("folder-1", "Documents", "folder"),
             mockFileNode("file-1", "readme.pdf", "file"),
@@ -293,7 +293,7 @@ describe("FilePickerShell", () => {
 
     it("should be able to collapse a folder and not see its content", async () => {
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(
           [mockFileNode("folder-1", "Documents", "folder")],
           [mockFileNode("child-1", "report.pdf", "file")],
         ),
@@ -316,11 +316,11 @@ describe("FilePickerShell", () => {
     });
 
     it("should expand a folder, see the skeleton, then the content, collapse it, and when expanding again see the content directly without skeleton because it is cached", async () => {
-      const fileRepo = FileResourceRepositoryTestImpl.fromFileNodes(
+      const fileResourceRepository = FileResourceRepositoryTestImpl.fromFileNodes(
         [mockFileNode("folder-1", "Documents", "folder")],
         [mockFileNode("child-1", "cached-file.pdf", "file")],
       );
-      setupDIContainer({ fileRepo });
+      setupDIContainer({ fileResourceRepository });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -358,11 +358,11 @@ describe("FilePickerShell", () => {
       const fileNode = mockFileNode("file-1", "document.pdf", "file", {
         resourcePath: "docs/document.pdf",
       });
-      const fileRepo = FileResourceRepositoryTestImpl.fromFileNodes(
+      const fileResourceRepository = FileResourceRepositoryTestImpl.fromFileNodes(
         [fileNode],
         [fileNode],
       );
-      setupDIContainer({ fileRepo });
+      setupDIContainer({ fileResourceRepository });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -398,7 +398,7 @@ describe("FilePickerShell", () => {
         resourcePath: "docs/document.pdf",
       });
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(
           [fileNode],
           [fileNode],
         ),
@@ -445,7 +445,7 @@ describe("FilePickerShell", () => {
         resourcePath: "Documents",
       });
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(
           [folderNode],
           [folderNode],
         ).withDescendantIds(() => ["folder-1", "file-1"]),
@@ -482,7 +482,7 @@ describe("FilePickerShell", () => {
         resourcePath: "Documents",
       });
       setupDIContainer({
-        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+        fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(
           [folderNode],
           [folderNode],
         ).withDescendantPaths(() => [

@@ -70,9 +70,17 @@ There are two flows:
                                    │ get*Repository() returns instances
                                    ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  server-actions.ts                                                       │
-│  getFilesAction() → getFileResourceRepository().fetchContents(...)        │
-│  getConnectionIdAction() → getConnectionRepository().getConnectionId()   │
+│  app/actions/server-actions.ts (thin wrappers)                            │
+│  getFilesAction() → getFilesUseCase(getFileResourceRepository(), ...)     │
+│  getConnectionIdAction() → getConnectionIdUseCase(getConnectionRepo())    │
+│  ...                                                                     │
+└──────────────────────────────────────┬───────────────────────────────────┘
+                                       │ use cases receive repos as params
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  domain/use-cases/                                                        │
+│  getFilesUseCase(fileResourceRepository, folderId)                        │
+│  getConnectionIdUseCase(connectionRepo)                                   │
 │  ...                                                                     │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -97,10 +105,10 @@ beforeEach(() => {
   setRepositories({
     authRepository: new AuthRepositoryTestImpl(),
     connectionRepository: new ConnectionRepositoryTestImpl("conn-1"),
-    fileResourceRepository: FileResourceRepositoryTestImpl.withQueue([
-      rootApiResponse,
-      folderApiResponse,
-    ]),
+    fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(
+      [/* root FileNode[] */],
+      [/* folder FileNode[] */],
+    ),
     knowledgeBaseRepository: new KnowledgeBaseRepositoryTestImpl("kb-1"),
   });
 });
