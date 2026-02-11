@@ -64,6 +64,10 @@ Ensures code meets lint, types, and tests before it reaches the remote.
 
 **Results:** local → `.lighthouseci/*.html`; CI → **Actions → Artifacts → lighthouse-reports** (7 days); logs → temporary public URL.
 
+*Current project metrics:*
+
+![Lighthouse Report](docs/images/lighthouse-report.png)
+
 **Target metrics** (`lighthouserc.js`)
 
 | Metric | Target |
@@ -124,6 +128,10 @@ Node 20, `npm ci`.
 
 - **Unit tests**: use cases and utilities in `domain/use-cases/**/*.use-case.test.ts`; pass test implementations, no network.
 - **Integration tests**: main flows (listing, filters, sorting, expand, index/de-index) via DI with `FileResourceRepositoryTestImpl`, `KnowledgeBaseRepositoryTestImpl`.
+
+*Current project metrics:*
+
+![Code Coverage Report](docs/images/coverage-report.png)
 
 ---
 

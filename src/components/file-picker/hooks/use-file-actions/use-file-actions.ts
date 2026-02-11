@@ -7,7 +7,7 @@ import {
   validateIndexResourceUseCase,
 } from "@/domain/use-cases";
 import { useActiveKnowledgeBaseId, useKnowledgeBaseActions } from "@/hooks";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { UseFileActionsParams, UseFileActionsResult } from ".";
 
@@ -15,6 +15,8 @@ export function useFileActions({
   isError,
   error,
   onRefetch,
+  onIndexError,
+  onDeIndexError,
 }: UseFileActionsParams): UseFileActionsResult {
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
   const {
@@ -88,6 +90,31 @@ export function useFileActions({
       deIndexFolder.variables,
     ],
   );
+
+  useEffect(() => {
+    if (indexResource.isError && indexResource.variables && onIndexError) {
+      const ids =
+        indexResource.variables.expandedIds ?? [indexResource.variables.node.id];
+      onIndexError(ids);
+    }
+  }, [indexResource.isError, indexResource.variables, onIndexError]);
+
+  useEffect(() => {
+    if (deIndexResource.isError && deIndexResource.variables?.resourceId && onDeIndexError) {
+      onDeIndexError([deIndexResource.variables.resourceId]);
+    }
+  }, [deIndexResource.isError, deIndexResource.variables, onDeIndexError]);
+
+  useEffect(() => {
+    if (
+      deIndexFolder.isError &&
+      deIndexFolder.variables?.items &&
+      onDeIndexError
+    ) {
+      const ids = deIndexFolder.variables.items.map((i) => i.resourceId);
+      onDeIndexError(ids);
+    }
+  }, [deIndexFolder.isError, deIndexFolder.variables, onDeIndexError]);
 
   return {
     data: {
