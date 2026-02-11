@@ -6,35 +6,18 @@ import {
   useIndexedResourceIds,
   useKBActions,
 } from "@/hooks";
+import { useFileFilters } from "./hooks/use-file-filters";
 import { getGDriveQueryOptions } from "@/hooks/use-gdrive-files";
 import { queryKeys } from "@/hooks/query-keys";
 import { cn } from "@/view/utils";
-import { applyFilters } from "@/utils/filter-files";
 import { sortFiles } from "@/utils/sort-files";
-import type {
-  FileNode,
-  PaginatedFileNodes,
-  StatusFilter,
-  TypeFilter,
-} from "@/domain/types";
+import type { FileNode, PaginatedFileNodes } from "@/domain/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  FileTable,
-  type DisplayRow,
-  type SortOrder,
-} from "@/components/file-table";
+import { FileTable, type DisplayRow } from "@/components/file-table";
 import { FilterBar } from "@/components/filter-bar";
 
 /** Single breadcrumb segment: id for navigation, name for display */
@@ -46,44 +29,15 @@ interface BreadcrumbSegment {
 /** Fixed shell height (80vh) to prevent layout jumps when content changes */
 const SHELL_HEIGHT = "h-[80vh]";
 
-const SORT_ORDER_PARAM = "sortOrder";
-const STATUS_PARAM = "status";
-const TYPE_PARAM = "type";
-
-const VALID_STATUS: StatusFilter[] = ["all", "indexed", "not-indexed"];
-const VALID_TYPE: TypeFilter[] = ["all", "folder", "file", "pdf", "csv", "txt"];
-
-function parseStatus(value: string | null): StatusFilter {
-  if (value && VALID_STATUS.includes(value as StatusFilter)) {
-    return value as StatusFilter;
-  }
-  return "all";
-}
-
-function parseType(value: string | null): TypeFilter {
-  if (value && VALID_TYPE.includes(value as TypeFilter)) {
-    return value as TypeFilter;
-  }
-  return "all";
-}
-
 export function FilePickerShell() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const sortOrder = (searchParams.get(SORT_ORDER_PARAM) as SortOrder) ?? "asc";
-  const statusFilter = parseStatus(searchParams.get(STATUS_PARAM));
-  const typeFilter = parseType(searchParams.get(TYPE_PARAM));
-
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(
     undefined,
   );
   const [breadcrumbPath, setBreadcrumbPath] = useState<BreadcrumbSegment[]>([]);
-  const [searchFilter, setSearchFilter] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [childData, setChildData] = useState<Map<string, FileNode[]>>(
     new Map(),
   );
-  const [, startTransition] = useTransition();
   const queryClient = useQueryClient();
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,6 +49,16 @@ export function FilePickerShell() {
   const indexedIdsRaw = useIndexedResourceIds();
   const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
   const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
+
+  const {
+    processedResources,
+    filters,
+    actions,
+    hasActiveFilters,
+  } = useFileFilters({
+    rawItems: data?.items ?? [],
+    indexedIds,
+  });
   const {
     indexNode,
     indexResource,
@@ -110,15 +74,9 @@ export function FilePickerShell() {
 
   const hasGenericError = isError && !isMissingEnv;
 
-  /**
-   * Navigates to a folder (or root when id is undefined).
-   * Clears search filters on navigation.
-   * When displayName is provided, appends to breadcrumb path (table navigation).
-   * When navigating via breadcrumb click, truncates path to the clicked segment.
-   */
   const mapsTo = useCallback(
     (id: string | undefined, displayName?: string) => {
-      setSearchFilter("");
+      actions.setSearch("");
       setExpandedIds(new Set());
       setChildData(new Map());
 
@@ -137,68 +95,7 @@ export function FilePickerShell() {
         setBreadcrumbPath((prev) => [...prev, { id, name: displayName ?? id }]);
       }
     },
-    [breadcrumbPath],
-  );
-
-  const filteredResources = useMemo(
-    () =>
-      applyFilters(data?.items ?? [], {
-        searchQuery: searchFilter,
-        status: statusFilter,
-        type: typeFilter,
-        indexedIds,
-      }),
-    [data?.items, searchFilter, statusFilter, typeFilter, indexedIds],
-  );
-
-  const updateUrlParams = useCallback(
-    (updates: { status?: StatusFilter; type?: TypeFilter }) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (updates.status !== undefined) {
-        if (updates.status === "all") params.delete(STATUS_PARAM);
-        else params.set(STATUS_PARAM, updates.status);
-      }
-      if (updates.type !== undefined) {
-        if (updates.type === "all") params.delete(TYPE_PARAM);
-        else params.set(TYPE_PARAM, updates.type);
-      }
-      router.push(`?${params.toString()}`, { scroll: false });
-    },
-    [searchParams, router],
-  );
-
-  const handleStatusChange = useCallback(
-    (status: StatusFilter) => {
-      startTransition(() => updateUrlParams({ status }));
-    },
-    [updateUrlParams],
-  );
-
-  const handleTypeChange = useCallback(
-    (type: TypeFilter) => {
-      startTransition(() => updateUrlParams({ type }));
-    },
-    [updateUrlParams],
-  );
-
-  const handleClearFilters = useCallback(() => {
-    startTransition(() => {
-      setSearchFilter("");
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete(STATUS_PARAM);
-      params.delete(TYPE_PARAM);
-      router.push(`?${params.toString()}`, { scroll: false });
-    });
-  }, [searchParams, router]);
-
-  const hasActiveFilters =
-    statusFilter !== "all" ||
-    typeFilter !== "all" ||
-    searchFilter.trim() !== "";
-
-  const sortedResources = useMemo(
-    () => sortFiles(filteredResources, sortOrder),
-    [filteredResources, sortOrder],
+    [breadcrumbPath, actions],
   );
 
   const handleFolderToggle = useCallback((folderId: string) => {
@@ -284,7 +181,7 @@ export function FilePickerShell() {
         if (node.type === "folder" && expandedIds.has(node.id)) {
           const children = childData.get(node.id);
           if (children) {
-            addNodes(sortFiles(children, sortOrder), depth + 1);
+            addNodes(sortFiles(children, filters.sortOrder), depth + 1);
           } else {
             for (let i = 0; i < 3; i++) {
               rows.push({
@@ -299,18 +196,9 @@ export function FilePickerShell() {
       }
     }
 
-    addNodes(sortedResources, 0);
+    addNodes(processedResources, 0);
     return rows;
-  }, [sortedResources, expandedIds, childData, sortOrder]);
-
-  const handleSortToggle = useCallback(() => {
-    startTransition(() => {
-      const next = sortOrder === "asc" ? "desc" : "asc";
-      const params = new URLSearchParams(searchParams.toString());
-      params.set(SORT_ORDER_PARAM, next);
-      router.push(`?${params.toString()}`, { scroll: false });
-    });
-  }, [sortOrder, searchParams, router]);
+  }, [processedResources, expandedIds, childData, filters.sortOrder]);
 
   /** Delay before prefetch to avoid requests when cursor is just passing through */
   const PREFETCH_DELAY_MS = 150;
@@ -440,18 +328,18 @@ export function FilePickerShell() {
       <div className="flex shrink-0 items-center gap-2">
         <div className="min-w-0 flex-1">
           <FilterBar
-            status={statusFilter}
-            type={typeFilter}
-            onStatusChange={handleStatusChange}
-            onTypeChange={handleTypeChange}
-            onClearFilters={handleClearFilters}
+            status={filters.status}
+            type={filters.type}
+            onStatusChange={actions.updateStatus}
+            onTypeChange={actions.updateType}
+            onClearFilters={actions.clearFilters}
             hasActiveFilters={hasActiveFilters}
           />
         </div>
         <input
           type="search"
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
+          value={filters.search}
+          onChange={(e) => actions.setSearch(e.target.value)}
           placeholder="Search by..."
           className="w-2/5 min-w-32 shrink-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
@@ -512,14 +400,14 @@ export function FilePickerShell() {
               onDeIndexRequest={handleDeIndexRequest}
               isIndexPending={isIndexPending}
               isDeIndexPending={isDeIndexPending}
-              sortOrder={sortOrder}
-              onSortToggle={handleSortToggle}
+              sortOrder={filters.sortOrder}
+              onSortToggle={actions.toggleSort}
               emptyMessage={
                 (data?.items?.length ?? 0) === 0
                   ? "No files or folders"
                   : "No files found"
               }
-              onResetFilters={hasActiveFilters ? handleClearFilters : undefined}
+              onResetFilters={hasActiveFilters ? actions.clearFilters : undefined}
             />
           )}
         </div>
