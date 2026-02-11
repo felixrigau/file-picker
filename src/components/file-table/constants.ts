@@ -1,6 +1,9 @@
 /** Number of skeleton rows shown during initial load */
 export const SKELETON_ROW_COUNT = 6;
 
+/** Min height for table content area — matches skeleton height to prevent CLS when empty */
+export const TABLE_CONTENT_MIN_HEIGHT = "min-h-[21rem]";
+
 /** Base left padding for table cells (matches Tailwind px-4 / 1rem) */
 export const CELL_PADDING_LEFT_PX = 16;
 
