@@ -1,5 +1,5 @@
-export { useFileActions } from "./use-file-actions";
+export { useFileActions } from "../use-file-actions";
 export type {
   UseFileActionsParams,
   UseFileActionsResult,
-} from "./use-file-actions";
+} from "../use-file-actions";

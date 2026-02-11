@@ -47,7 +47,7 @@ export function FilePickerShell() {
       ? "No files or folders"
       : "No files found";
 
-  const hasError = indexing.data.isMissingEnv || indexing.data.hasGenericError;
+  const hasError = indexing.data.hasGenericError;
 
   return (
     <FilePickerLayout>
@@ -76,9 +76,6 @@ export function FilePickerShell() {
       <FilePickerContentContainer>
         {hasError ? (
           <FilePickerError
-            variant={
-              indexing.data.isMissingEnv ? "missingEnv" : "generic"
-            }
             message={indexing.data.errorMessage}
             onRetry={indexing.action.refetch}
           />
