@@ -8,13 +8,13 @@ import { createWrapper } from "@/test/test-utils";
 import { QueryClient } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetRepositories, setRepositories } from "@/lib/di-container";
+import { resetRepositories, setRepositories } from "@/infra/modules/di-container";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
-} from "@/lib/adapters/test";
+} from "@/infra/adapters/test";
 
 function setupDIContainer(options: {
   kbRepo?: KnowledgeBaseRepositoryTestImpl;

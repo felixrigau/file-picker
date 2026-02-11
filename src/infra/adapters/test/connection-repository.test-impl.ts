@@ -1,4 +1,4 @@
-import type { ConnectionRepository } from "../../ports/connection-repository.port";
+import type { ConnectionRepository } from "@/domain/ports/connection-repository.port";
 
 /**
  * Test implementation — returns fixed connection id. No external calls.

@@ -1,10 +1,7 @@
-import type {
-  ApiResource,
-  PaginatedApiResponse,
-} from "@/types/api";
-import type { ConnectionRepository } from "../ports/connection-repository.port";
-import type { FileResourceRepository } from "../ports/file-resource-repository.port";
-import type { HttpClient } from "../http-client";
+import type { ApiResource, PaginatedApiResponse } from "@/infra/types/api-types";
+import type { HttpClient } from "../../modules/http-client";
+import type { ConnectionRepository } from "@/domain/ports/connection-repository.port";
+import type { FileResourceRepository } from "@/domain/ports/file-resource-repository.port";
 
 const BACKEND_URL = "https://api.stack-ai.com";
 
@@ -37,9 +34,7 @@ export class FileResourceRepositoryImpl implements FileResourceRepository {
       for (const child of children) {
         ids.add(child.resource_id);
         if (child.inode_type === "directory") {
-          const descendantIds = await this.getDescendantIds(
-            child.resource_id,
-          );
+          const descendantIds = await this.getDescendantIds(child.resource_id);
           descendantIds.forEach((id) => ids.add(id));
         }
       }

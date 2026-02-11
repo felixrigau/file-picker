@@ -1,4 +1,4 @@
-import type { ApiResource, PaginatedApiResponse } from "@/types/api";
+import type { ApiResource, PaginatedApiResponse } from "@/infra/types/api-types";
 
 /**
  * Port: File resource — GDrive files/folders listing and traversal.

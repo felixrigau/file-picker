@@ -1,5 +1,5 @@
 {
-  "entryPoints": ["src/lib/di-container.ts", "src/lib/ports", "src/lib/adapters"],
+  "entryPoints": ["src/infra/modules/di-container.ts", "src/domain/ports", "src/infra/adapters"],
   "out": "docs/api-reference",
   "name": "File Picker API",
   "includeVersion": true,

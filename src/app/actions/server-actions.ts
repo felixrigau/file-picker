@@ -1,13 +1,13 @@
 "use server";
 
-import { mapPaginatedApiResponseToResult } from "@/lib/api-mappers";
+import { mapPaginatedApiResponseToResult } from "@/infra/mappers/api-mappers";
 import {
   getConnectionRepository,
   getFileResourceRepository,
   getKnowledgeBaseRepository,
-} from "@/lib/di-container";
-import type { IndexingParams } from "@/types/api";
-import type { PaginatedFileNodes } from "@/types/domain";
+} from "@/infra/modules/di-container";
+import type { IndexingParams } from "@/infra/types/api-types";
+import type { PaginatedFileNodes } from "@/domain/types";
 
 export async function getFilesAction(
   folderId?: string,

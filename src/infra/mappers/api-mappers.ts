@@ -1,6 +1,5 @@
-import type { PaginatedApiResponse } from "@/types/api";
-import type { ApiResource } from "@/types/api";
-import type { FileNode, PaginatedFileNodes } from "@/types/domain";
+import type { ApiResource, PaginatedApiResponse } from "@/infra/types/api-types";
+import type { FileNode, PaginatedFileNodes } from "@/domain/types/domain";
 
 /**
  * Extracts display name from inode path (last segment).

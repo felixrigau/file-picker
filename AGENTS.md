@@ -43,9 +43,11 @@ Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle si
 
 - `@/app/actions/`: Entry point for Server-side logic (Wraps `ApiService`).
 - `@/hooks/`: Modular hooks (e.g., `use-gdrive-files.ts`). Exported from `index.ts`.
-- `@/lib/`: Ports (interfaces), adapters (implementations), DI Container (composition root). See docs/DI_CONTAINER.md.
+- `@/infra/`: Adapters, types (API), mappers, DI Container, http-client. See docs/DI_CONTAINER.md.
+- `@/domain/`: Types (domain), ports (interfaces). Domain layer.
 - `@/view/`: View-layer utilities (e.g., `utils.ts` with `cn()` for Tailwind).
-- `@/types/`: Types split by layer — `domain.ts` (View), `api.ts` (infra). Flow: API → Domain → View. View imports only from `@/types/domain`. Avoid `any`.
+- `@/domain/types`: Domain types (View layer). Flow: API → Domain → View. View imports only from `@/domain/types`. Avoid `any`.
+- `@/infra/types`: API (transport) types. Used only by adapters and mappers. Never import in View layer.
 
 ## 🧪 Testing Protocol
 

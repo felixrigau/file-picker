@@ -27,4 +27,4 @@
 ## 📂 File Organization
 
 - Logic: `@/app/actions/`, `@/hooks/`, `@/lib/`, `@/types/`.
-- References: Always check `@AGENTS.md` and `@/types/domain` or `@/types/api` before generating code.
+- References: Always check `@AGENTS.md` and `@/domain/types` or `@/infra/types` before generating code.

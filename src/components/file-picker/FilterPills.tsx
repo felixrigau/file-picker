@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/view/utils";
-import type { StatusFilter, TypeFilter } from "@/types/domain";
+import type { StatusFilter, TypeFilter } from "@/domain/types";
 import {
   CheckCircle2,
   ChevronDown,

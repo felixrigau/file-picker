@@ -2,7 +2,7 @@ import type {
   FileNode,
   StatusFilter,
   TypeFilter,
-} from "@/types/domain";
+} from "@/domain/types";
 
 /**
  * Extracts the file extension from a filename (e.g. "report.pdf" → "pdf").

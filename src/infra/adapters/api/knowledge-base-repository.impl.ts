@@ -2,10 +2,10 @@ import type {
   CreateKnowledgeBasePayload,
   CreateKnowledgeBaseResponse,
   IndexingParams,
-} from "@/types/api";
-import type { AuthRepository } from "../ports/auth-repository.port";
-import type { KnowledgeBaseRepository } from "../ports/knowledge-base-repository.port";
-import type { HttpClient } from "../http-client";
+} from "@/infra/types/api-types";
+import type { HttpClient } from "../../modules/http-client";
+import type { AuthRepository } from "@/domain/ports/auth-repository.port";
+import type { KnowledgeBaseRepository } from "@/domain/ports/knowledge-base-repository.port";
 
 const BACKEND_URL = "https://api.stack-ai.com";
 
@@ -48,13 +48,14 @@ export class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
     };
 
     const createUrl = `${BACKEND_URL}/knowledge_bases`;
-    const createRes = await this.httpClient.request<CreateKnowledgeBaseResponse>(
-      "POST",
-      createUrl,
-      {
-        body: JSON.stringify(payload),
-      },
-    );
+    const createRes =
+      await this.httpClient.request<CreateKnowledgeBaseResponse>(
+        "POST",
+        createUrl,
+        {
+          body: JSON.stringify(payload),
+        },
+      );
 
     const syncUrl = `${BACKEND_URL}/knowledge_bases/sync/trigger/${createRes.knowledge_base_id}/${orgId}`;
     await this.httpClient.request<unknown>("GET", syncUrl);
@@ -62,10 +63,7 @@ export class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
     return { knowledge_base_id: createRes.knowledge_base_id };
   }
 
-  async delete(
-    knowledgeBaseId: string,
-    resourcePath: string,
-  ): Promise<void> {
+  async delete(knowledgeBaseId: string, resourcePath: string): Promise<void> {
     const baseUrl = `${BACKEND_URL}/knowledge_bases/${knowledgeBaseId}/resources`;
     const url = `${baseUrl}?${new URLSearchParams({ resource_path: resourcePath }).toString()}`;
     await this.httpClient.request<unknown>("DELETE", url);

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/view/utils";
-import type { FileNode } from "@/types/domain";
+import type { FileNode } from "@/domain/types";
 import {
   ArrowDown,
   ArrowUp,

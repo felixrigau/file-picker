@@ -1,5 +1,5 @@
-import type { IndexingParams } from "@/types/api";
-import type { KnowledgeBaseRepository } from "../../ports/knowledge-base-repository.port";
+import type { IndexingParams } from "@/infra/types/api-types";
+import type { KnowledgeBaseRepository } from "@/domain/ports/knowledge-base-repository.port";
 
 /**
  * Test implementation — records calls, returns configurable knowledge_base_id.

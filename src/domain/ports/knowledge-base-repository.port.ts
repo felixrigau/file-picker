@@ -1,4 +1,4 @@
-import type { IndexingParams } from "@/types/api";
+import type { IndexingParams } from "@/infra/types/api-types";
 
 /**
  * Port: Knowledge base — Indexing and de-indexing.

@@ -16,7 +16,7 @@ import type {
   PaginatedFileNodes,
   StatusFilter,
   TypeFilter,
-} from "@/types/domain";
+} from "@/domain/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";

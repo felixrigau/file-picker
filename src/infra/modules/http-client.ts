@@ -1,4 +1,4 @@
-import type { AuthRepository } from "./ports/auth-repository.port";
+import type { AuthRepository } from "@/domain/ports/auth-repository.port";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 

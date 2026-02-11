@@ -1,4 +1,4 @@
-import type { FileNode } from "@/types/domain";
+import type { FileNode } from "@/domain/types";
 import { describe, expect, it } from "vitest";
 import { sortFiles } from "./sort-files";
 

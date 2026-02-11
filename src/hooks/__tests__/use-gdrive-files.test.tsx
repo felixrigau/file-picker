@@ -1,16 +1,16 @@
 import { useGDriveFiles } from "@/hooks/use-gdrive-files";
 import { createWrapper } from "@/test/test-utils";
-import type { FileNode, PaginatedFileNodes } from "@/types/domain";
+import type { FileNode, PaginatedFileNodes } from "@/domain/types";
 import { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetRepositories, setRepositories } from "@/lib/di-container";
+import { resetRepositories, setRepositories } from "@/infra/modules/di-container";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
-} from "@/lib/adapters/test";
+} from "@/infra/adapters/test";
 
 function mockFileNode(
   id: string,

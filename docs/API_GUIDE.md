@@ -21,7 +21,7 @@ import {
   getConnectionRepository,
   getFileResourceRepository,
   getKnowledgeBaseRepository,
-} from "@/lib/di-container";
+} from "@/infra/modules/di-container";
 ```
 
 ## Examples
@@ -70,8 +70,8 @@ Expose via a Route Handler so the client can call it with TanStack Query:
 
 ```ts
 // app/api/drive/route.ts
-import { getFileResourceRepository } from "@/lib/di-container";
-import { mapPaginatedApiResponseToResult } from "@/lib/api-mappers";
+import { getFileResourceRepository } from "@/infra/modules/di-container";
+import { mapPaginatedApiResponseToResult } from "@/infra/mappers/api-mappers";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -90,7 +90,7 @@ For full details on **initialization**, **dependency injection**, and **test set
 
 ## Test Implementations
 
-For unit tests, use the test implementations from `@/lib/adapters/test`:
+For unit tests, use the test implementations from `@/infra/adapters/test`:
 
 ```ts
 import {
@@ -98,8 +98,8 @@ import {
   ConnectionRepositoryTestImpl,
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
-} from "@/lib/adapters/test";
-import { resetRepositories, setRepositories } from "@/lib/di-container";
+} from "@/infra/adapters/test";
+import { resetRepositories, setRepositories } from "@/infra/modules/di-container";
 
 beforeEach(() => {
   resetRepositories();
@@ -120,4 +120,4 @@ afterEach(() => {
 
 ## API Reference
 
-For port definitions and types, see `src/lib/ports/` and the generated TypeDoc output in `docs/api-reference/` (run `npm run docs:generate` to build).
+For port definitions and types, see `src/domain/ports/` and the generated TypeDoc output in `docs/api-reference/` (run `npm run docs:generate` to build).

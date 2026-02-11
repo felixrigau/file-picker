@@ -1,6 +1,6 @@
-import type { ApiResource, PaginatedApiResponse } from "@/types/api";
-import type { FileNode } from "@/types/domain";
-import type { FileResourceRepository } from "../../ports/file-resource-repository.port";
+import type { ApiResource, PaginatedApiResponse } from "@/infra/types/api-types";
+import type { FileNode } from "@/domain/types/domain";
+import type { FileResourceRepository } from "@/domain/ports/file-resource-repository.port";
 
 /**
  * Converts a FileNode (domain) to ApiResource (API) for test data.

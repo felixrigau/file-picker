@@ -5,17 +5,17 @@
  * @see docs/DI_CONTAINER.md
  */
 
+import { AuthRepositoryImpl } from "../adapters/api/auth-repository.impl";
+import { ConnectionRepositoryImpl } from "../adapters/api/connection-repository.impl";
+import { FileResourceRepositoryImpl } from "../adapters/api/file-resource-repository.impl";
+import { KnowledgeBaseRepositoryImpl } from "../adapters/api/knowledge-base-repository.impl";
 import { HttpClient } from "./http-client";
 import type {
   AuthRepository,
   ConnectionRepository,
   FileResourceRepository,
   KnowledgeBaseRepository,
-} from "./ports";
-import { AuthRepositoryImpl } from "./adapters/auth-repository.impl";
-import { ConnectionRepositoryImpl } from "./adapters/connection-repository.impl";
-import { FileResourceRepositoryImpl } from "./adapters/file-resource-repository.impl";
-import { KnowledgeBaseRepositoryImpl } from "./adapters/knowledge-base-repository.impl";
+} from "@/domain/ports";
 
 let authRepository: AuthRepository | null = null;
 let connectionRepository: ConnectionRepository | null = null;
@@ -66,7 +66,8 @@ export function setRepositories(overrides: {
   fileResourceRepository?: FileResourceRepository;
   knowledgeBaseRepository?: KnowledgeBaseRepository;
 }): void {
-  if (overrides.authRepository != null) authRepository = overrides.authRepository;
+  if (overrides.authRepository != null)
+    authRepository = overrides.authRepository;
   if (overrides.connectionRepository != null)
     connectionRepository = overrides.connectionRepository;
   if (overrides.fileResourceRepository != null)

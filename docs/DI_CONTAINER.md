@@ -11,7 +11,7 @@ The **DI Container** (Dependency Injection Container) is the composition root: t
 The DI Container is explicitly initialized at app startup:
 
 ```
-app/layout.tsx  →  imports  →  lib/di-container.init.ts  →  calls  →  bootstrapDIContainer()
+app/layout.tsx  →  imports  →  infra/di-di-container.init.ts  →  calls  →  bootstrapDIContainer()
 ```
 
 `di-container.init.ts` runs `bootstrapDIContainer()` as a side effect when imported. This creates all instances (AuthRepositoryImpl, HttpClient, ConnectionRepositoryImpl, etc.) and makes them ready to use.
@@ -46,18 +46,18 @@ There are two flows:
 ```
                     ┌─────────────────────────────────────────┐
                     │  app/layout.tsx                          │
-                    │  import "@/lib/di-container.init"        │
+                    │  import "@/infra/modules/di-container.init"        │
                     └──────────────────┬─────────────────────┘
                                         │ side-effect
                                         ▼
                     ┌─────────────────────────────────────────┐
-                    │  di-container.init.ts                   │
+                    │  infra/modules/di-container.init.ts                   │
                     │  bootstrapDIContainer()                  │
                     └──────────────────┬──────────────────────┘
                                        │ creates instances
                                        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  di-container.ts                                                         │
+│  infra/modules/di-container.ts                                                   │
 │                                                                          │
 │  authRepository         = AuthRepositoryImpl()                           │
 │  connectionRepository  = ConnectionRepositoryImpl(httpClient, ...)       │
@@ -81,13 +81,13 @@ There are two flows:
 Tests use real Server Actions and inject test implementations via the DI Container:
 
 ```ts
-import { resetRepositories, setRepositories } from "@/lib/di-container";
+import { resetRepositories, setRepositories } from "@/infra/modules/di-container";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
-} from "@/lib/adapters/test";
+} from "@/infra/adapters/test";
 
 beforeEach(() => {
   resetRepositories();
@@ -113,12 +113,12 @@ afterEach(() => {
 
 ## 5. DI Container API
 
-| Function | Usage |
-|----------|-------|
-| `getAuthRepository()` | Get the Auth port (used internally by other adapters) |
-| `getConnectionRepository()` | Get the GDrive connections port |
-| `getFileResourceRepository()` | Get the file resources port |
-| `getKnowledgeBaseRepository()` | Get the knowledge base port |
-| `bootstrapDIContainer()` | Create all instances (called from di-container.init) |
-| `setRepositories(overrides)` | Replace implementations (for tests) |
-| `resetRepositories()` | Reset to initial state (for tests) |
+| Function                       | Usage                                                 |
+| ------------------------------ | ----------------------------------------------------- |
+| `getAuthRepository()`          | Get the Auth port (used internally by other adapters) |
+| `getConnectionRepository()`    | Get the GDrive connections port                       |
+| `getFileResourceRepository()`  | Get the file resources port                           |
+| `getKnowledgeBaseRepository()` | Get the knowledge base port                           |
+| `bootstrapDIContainer()`       | Create all instances (called from di-container.init)  |
+| `setRepositories(overrides)`   | Replace implementations (for tests)                   |
+| `resetRepositories()`          | Reset to initial state (for tests)                    |

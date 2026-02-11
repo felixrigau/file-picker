@@ -1,5 +1,5 @@
-import type { ApiAuthResponse, ApiOrgResponse } from "@/types/api";
-import type { AuthRepository } from "../ports/auth-repository.port";
+import type { ApiAuthResponse, ApiOrgResponse } from "@/infra/types/api-types";
+import type { AuthRepository } from "@/domain/ports/auth-repository.port";
 
 const SUPABASE_AUTH_URL = "https://sb.stack-ai.com";
 const BACKEND_URL = "https://api.stack-ai.com";

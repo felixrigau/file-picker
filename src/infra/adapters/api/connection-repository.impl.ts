@@ -1,5 +1,5 @@
-import type { ConnectionRepository } from "../ports/connection-repository.port";
-import type { HttpClient } from "../http-client";
+import type { HttpClient } from "../../modules/http-client";
+import type { ConnectionRepository } from "@/domain/ports/connection-repository.port";
 
 const BACKEND_URL = "https://api.stack-ai.com";
 
@@ -23,7 +23,7 @@ export class ConnectionRepositoryImpl implements ConnectionRepository {
 
     const list = Array.isArray(response)
       ? response
-      : response?.data ?? response?.results ?? response?.items ?? [];
+      : (response?.data ?? response?.results ?? response?.items ?? []);
 
     if (list.length === 0) {
       throw new Error(

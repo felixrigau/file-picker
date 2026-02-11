@@ -1,7 +1,7 @@
 import { FilePickerShell } from "../FilePickerShell";
 import { createTestQueryClient, renderWithProviders } from "@/test/test-utils";
 import { queryKeys } from "@/hooks/query-keys";
-import type { FileNode, PaginatedFileNodes } from "@/types/domain";
+import type { FileNode, PaginatedFileNodes } from "@/domain/types";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   fireEvent,
@@ -10,13 +10,13 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetRepositories, setRepositories } from "@/lib/di-container";
+import { resetRepositories, setRepositories } from "@/infra/modules/di-container";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
-} from "@/lib/adapters/test";
+} from "@/infra/adapters/test";
 
 let searchParams = new URLSearchParams();
 vi.mock("sonner", () => ({
