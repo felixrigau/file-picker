@@ -85,13 +85,13 @@ export interface RenderWithProvidersOptions extends Omit<RenderOptions, "wrapper
  * Renders a component wrapped in QueryClientProvider for integration tests.
  * Returns the standard render result plus the queryClient for cache setup or assertions.
  *
- * @param ui - The React element to render (e.g. <FilePickerShell />)
+ * @param ui - The React element to render (e.g. <FilePicker />)
  * @param options - Optional; pass queryClient to share or pre-populate cache
  * @returns Render result (screen, rerender, etc.) extended with `queryClient`
  *
  * @example
  * ```ts
- * const { screen, queryClient } = renderWithProviders(<FilePickerShell />, {
+ * const { screen, queryClient } = renderWithProviders(<FilePicker />, {
  *   queryClient: createTestQueryClient(),
  * });
  * queryClient.setQueryData(queryKeys.indexedIds(), ["file-1"]);

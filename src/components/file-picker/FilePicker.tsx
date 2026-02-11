@@ -1,8 +1,11 @@
 "use client";
 
 import { useGDriveFiles, useIndexedResourceIds } from "@/hooks";
-import { useFileActions } from "./hooks/actions";
-import { useFileFilters, useFileTree } from "./hooks/data";
+import {
+  useFileActions,
+  useFileFilters,
+  useFileTree,
+} from "./hooks";
 import {
   FilePickerBreadcrumbs,
   FilePickerContentContainer,
@@ -14,7 +17,7 @@ import { FileTable } from "@/components/file-table";
 import { FilterBar } from "@/components/filter-bar";
 import { useMemo, useState } from "react";
 
-export function FilePickerShell() {
+export function FilePicker() {
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(
     undefined,
   );

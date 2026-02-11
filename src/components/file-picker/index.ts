@@ -1,1 +1,1 @@
-export { FilePickerShell } from "./FilePickerShell";
+export { FilePicker } from "./FilePicker";
