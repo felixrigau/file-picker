@@ -40,21 +40,11 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Lighthouse
 
-### Command
+**Command:** `npm run audit:ci` — builds, audits [production URL](https://file-picker-smoky.vercel.app/), uploads reports.
 
-```bash
-npm run audit:ci
-```
+**Results:** local → `.lighthouseci/*.html`; CI → **Actions → Artifacts → lighthouse-reports** (7 days); logs → temporary public URL.
 
-This runs `lhci autorun --upload.target=temporary-public-storage`: it builds the app, starts a server, audits the production URL, asserts the metrics below, and uploads reports.
-
-### Where to check results
-
-- **Local run**: Reports are saved in `.lighthouseci/` (HTML and JSON per run). Open the `.html` files in a browser.
-- **CI (GitHub Actions)**: On push to `master`, the Lighthouse job uploads the `.lighthouseci/` folder as an artifact. Download it from the workflow run: **Actions → select run → Artifacts → lighthouse-reports** (retention: 7 days).
-- **Public report** (when using `temporary-public-storage`): LHCI outputs a URL in the logs where reports are hosted temporarily.
-
-### Target metrics (assertions in `lighthouserc.js`)
+**Target metrics** (`lighthouserc.js`)
 
 | Metric | Target |
 |--------|--------|
@@ -63,24 +53,20 @@ This runs `lhci autorun --upload.target=temporary-public-storage`: it builds the
 | Best practices | = 1.0 |
 | Cumulative Layout Shift (CLS) | ≤ 0.05 |
 
-The audit runs against [https://file-picker-smoky.vercel.app/](https://file-picker-smoky.vercel.app/).
-
 ---
 
 ## CI (GitHub Actions)
 
-Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
-
-**Triggers**: Push and pull requests targeting `master`.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) — triggers on push/PR to `master`.
 
 | Job | Description |
 |-----|-------------|
-| **Lint** | Runs ESLint |
-| **Type Check** | Runs TypeScript check (`npm run type-check`) |
-| **Test** | Runs Vitest (`npm run test:run`) |
-| **Lighthouse CI** | Runs Lighthouse audit on production URL. **Only on push to `master`**, depends on Lint and Type Check. Uploads reports to temporary storage and as GitHub artifact (`lighthouse-reports`, 7 days). |
+| Lint | ESLint |
+| Type Check | `npm run type-check` |
+| Test | Vitest (`npm run test:run`) |
+| Lighthouse CI | Audit on push to `master` only; artifact `lighthouse-reports` (7 days). |
 
-All jobs use Node 20, `npm ci`, and run in parallel (except Lighthouse, which waits for Lint and Type Check).
+Node 20, `npm ci`.
 
 ---
 
@@ -94,42 +80,30 @@ All jobs use Node 20, `npm ci`, and run in parallel (except Lighthouse, which wa
 
 ## Server Actions decisions
 
-**Server Actions** (Next.js) are used instead of API Routes as the layer between client and backend.
-
-**Benefits:**
-
-- **No API Routes** — avoids duplicating REST endpoints; actions are invoked directly from the client.
-- **Type safety** — end-to-end typed arguments and return values between client and server.
-- **No CORS** — actions run on the server, no cross-origin issues.
-- **Automatic serialization** — Next.js serializes data between client and server.
-- **Progressive enhancement** — works with JavaScript disabled (forms).
-- **Security** — credentials and sensitive logic stay on the server; the client never accesses `getFileResourceRepository()` or the APIs.
+**Server Actions** replace API Routes. Benefits: type safety end-to-end, no CORS, automatic serialization, credentials on server (client never touches repos or APIs).
 
 ---
 
 ## TanStack Query caching
 
-- **Per-folder cache**: each folder/subfolder has its own query (`googleDrive`, `folderId`). Content is loaded **once**; TanStack Query keeps it cached (staleTime 1 min, gcTime 5 min) for instant navigation.
-- **Selective invalidation**: mutations (index/de-index) only invalidate Google Drive queries in `onSettled`, reloading `isIndexed` state without unnecessary refetch of already-loaded content.
-- **Prefetch on hover** complements the cache: hovering over a collapsed folder preloads its content in the background so it’s ready when expanded.
+- **Per-folder cache**: content loaded once per folder (staleTime 1 min, gcTime 5 min).
+- **Selective invalidation**: index/de-index mutations only invalidate Google Drive queries in `onSettled` to refresh `isIndexed`.
 
 ---
 
 ## UI/UX decisions
 
-- **Optimistic UI** for indexing and de-indexing: state updates immediately; on error, rollback and show notification.
-- **Prefetching on hover**: hovering over a collapsed folder preloads its content (150ms delay) to reduce latency when expanding.
-- **Clear UX**: descriptive labels on buttons ("Index", "Remove", "Clear all filters"), icons per file type (PDF, CSV, TXT, etc.) and for folders, explicit "Indexed"/"Not indexed" states.
-- **Skeleton during loading** to avoid layout shift (CLS) and improve perceived performance.
+- **Optimistic UI** for index/de-index: immediate state update, rollback on error.
+- **Prefetch on hover**: collapsed folder content preloads after 150ms hover.
+- **Clear UX**: descriptive button labels, icons per file type, explicit "Indexed"/"Not indexed" states.
+- **Skeleton loading** to avoid layout shift (CLS).
 
 ---
 
 ## Testing decisions
 
-- **Unit tests**: utilities and business logic in use cases (`domain/use-cases/**/*.use-case.test.ts`). Run without network or DI, passing test implementations.
-- **Integration tests**: main file picker flows (listing, filters, sorting, expand folders, index/de-index). Use DI with `FileResourceRepositoryTestImpl`, `KnowledgeBaseRepositoryTestImpl`, etc., to simulate responses without real API calls.
-
-Integration tests demonstrate that test adapters (`infra/adapters/test/`) replace real adapters via `setRepositories()` without changing the view or hooks.
+- **Unit tests**: use cases and utilities in `domain/use-cases/**/*.use-case.test.ts`; pass test implementations, no network.
+- **Integration tests**: main flows (listing, filters, sorting, expand, index/de-index) via DI with `FileResourceRepositoryTestImpl`, `KnowledgeBaseRepositoryTestImpl`.
 
 ---
 
@@ -195,25 +169,11 @@ flowchart TB
 
 ### Business logic isolation in use cases
 
-All domain logic lives in `domain/use-cases/` as pure functions that take inputs and return outputs. Examples:
-
-| Use case                                                          | Responsibility                                                                                                                            |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `sortFilesUseCase`                                                | Sorts files A–Z/Z–A; folders always before files; uses `Intl.Collator` for locale-aware sorting.                                          |
-| `applyFilesFiltersUseCase`                                        | Applies filters by search text, type (folder/file/pdf/csv/…), and status (indexed/not-indexed). Filtering logic centralized in one place. |
-| `validateIndexResourceUseCase`                                    | Validates that a resource is indexable before indexing.                                                                                   |
-| `parseStatusUseCase`, `parseTypeUseCase`, `parseSortOrderUseCase` | Parse URL query params into domain types (SortOrder, TypeFilter, StatusFilter).                                                           |
-| `getDescendantResourceIdsUseCase`                                 | Fetches all descendant IDs of a folder for batch indexing.                                                                                |
-
-The UI and hooks do not contain this logic: they only emit events and display data. Components can be replaced without touching the domain.
+Domain logic lives in `domain/use-cases/` as pure functions. Examples: `sortFilesUseCase` (A–Z, folders first), `applyFilesFiltersUseCase` (text, type, status), `validateIndexResourceUseCase`, `parseStatusUseCase` / `parseTypeUseCase` / `parseSortOrderUseCase`, `getDescendantResourceIdsUseCase`. UI and hooks only emit events and display data.
 
 ### Decoupling benefits
 
-- Any port can be implemented with a different adapter (REST, GraphQL, WebSocket, mock) **without modifying the view or use cases**.
-- Integration tests use `FileResourceRepositoryTestImpl`, `KnowledgeBaseRepositoryTestImpl`, etc.; the DI Container injects test implementations instead of real ones.
-- New sources (Dropbox, OneDrive, etc.) can be added by defining adapters that fulfill the same ports.
-
-See [docs/DI_CONTAINER.md](docs/DI_CONTAINER.md) for detailed documentation.
+Ports can be swapped (REST, GraphQL, WebSocket, mock) without changing the view. New sources (Dropbox, OneDrive) require only new adapters. See [docs/DI_CONTAINER.md](docs/DI_CONTAINER.md).
 
 ---
 
@@ -233,14 +193,12 @@ See [docs/DI_CONTAINER.md](docs/DI_CONTAINER.md) for detailed documentation.
 
 ## Possible improvements
 
-- **Multiple view modes** — in addition to the current expandable tree view, add **list view** (compact table) and **large icons view** (grid with thumbnails/previews) for different usage flows.
-- **Error Boundary** — catch render errors and show a fallback instead of a blank screen.
-- **Sentry integration** — error monitoring in production.
-- **Persistent cache** — persist indexed IDs in localStorage/sessionStorage to survive page reloads.
-- **E2E with Playwright** — cover full flows (login → navigation → indexing).
-- **Storybook** — visual documentation for reusable components.
-- **Internationalization (i18n)** — translatable labels and messages.
-- **Accessibility (a11y)** — audits with axe-core, keyboard and screen reader support.
+- **Multiple view modes** — list view, large icons (grid) beside the tree view.
+- **Error Boundary** — fallback on render errors.
+- **Sentry** — production error monitoring.
+- **Persistent cache** — indexed IDs in localStorage to survive reloads.
+- **E2E (Playwright)** — full flows (login → navigation → indexing).
+- **Storybook**, **i18n**, **a11y** (axe-core, keyboard, screen readers).
 
 ---
 

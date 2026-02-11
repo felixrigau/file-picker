@@ -60,17 +60,18 @@ There are two flows:
                                        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  infra/modules/di-container.ts                                            │
-│  infra/modules/http-client.ts (singleton, used by adapters)               │
+│  infra/modules/http-client.ts (injected, used by adapters)                 │
 │                                                                          │
-│  authRepository         = AuthRepositoryImpl()                           │
-│  connectionRepository  = ConnectionRepositoryImpl(httpClient, ...)       │
-│  fileResourceRepository = FileResourceRepositoryImpl(...)                 │
-│  knowledgeBaseRepository = KnowledgeBaseRepositoryImpl(...)               │
+│  authRepository         = AuthRepositoryImpl()                            │
+│  httpClient             = HttpClient(tokenProvider: authRepository)       │
+│  connectionRepository   = ConnectionRepositoryImpl(httpClient)           │
+│  fileResourceRepository = FileResourceRepositoryImpl(httpClient, ...)     │
+│  knowledgeBaseRepository = KnowledgeBaseRepositoryImpl(httpClient)        │
 └──────────────────────────────────┬───────────────────────────────────────┘
                                    │ get*Repository() returns instances
                                    ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  app/actions/ (barrel: server-actions.ts)                                │
+│  src/actions/ (barrel: server-actions.ts)                               │
 │  files.actions.ts | connection.actions.ts | knowledge-base.actions.ts    │
 │  getConnectionIdAction() → getConnectionIdUseCase(getConnectionRepo())    │
 │  ...                                                                     │
@@ -127,13 +128,13 @@ afterEach(() => {
 ```
 src/infra/
 ├── adapters/        # API implementations (api/) and test doubles (test/)
-├── config/          # env.ts (getEnv)
 ├── mappers/         # api-mappers.ts (API → domain mapping)
 ├── modules/         # DI Container, HttpClient, init bootstrap
 │   ├── di-container.ts
 │   ├── di-container.init.ts
 │   └── http-client.ts
-└── types/           # api-types.ts (API/transport types)
+├── types/           # api-types.ts (API/transport types)
+└── utils/           # get-env.ts (getEnv)
 ```
 
 ---

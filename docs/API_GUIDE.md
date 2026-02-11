@@ -4,11 +4,11 @@ Ports & Adapters architecture for backend API access. This guide covers setup, u
 
 ## Overview
 
-Data access is abstracted behind **ports** (interfaces). The **DI Container** wires adapters (implementations) and exposes them via getters. The DI Container and `HttpClient` live in `@/infra/modules/`. Use only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
+Data access is abstracted behind **ports** (interfaces). The **DI Container** wires adapters (implementations) and exposes them via getters. The DI Container and `HttpClient` live in `@/infra/modules/`. Use only on the **server**: Server Actions or Server Components. Do not expose credentials to the client. (This project does not use API Routes.)
 
 ## Requirements
 
-Environment variables (see `.env.local.example`):
+Environment variables (see `.env.example`):
 
 - `NEXT_PUBLIC_STACK_AI_ANON_KEY` — Supabase anon key
 - `STACK_AI_EMAIL` — Account email (server-side only)
@@ -64,20 +64,32 @@ await getKnowledgeBaseRepository().delete(
 );
 ```
 
-### With TanStack Query (API route or Server Action)
+### With TanStack Query (Server Action)
 
-Expose via a Route Handler so the client can call it with TanStack Query:
+Server Actions are called directly from client hooks. TanStack Query wraps the action as `queryFn`:
 
 ```ts
-// app/api/drive/route.ts
+// src/actions/files.actions.ts
+"use server";
+import { getFilesUseCase } from "@/domain/use-cases";
 import { getFileResourceRepository } from "@/infra/modules/di-container";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const domainResult = await getFileResourceRepository().fetchContents(
-    searchParams.get("folderId") ?? undefined,
-  );
-  return Response.json(domainResult);
+export async function getFilesAction(folderId?: string) {
+  return getFilesUseCase(getFileResourceRepository(), folderId);
+}
+```
+
+```ts
+// src/hooks/use-google-drive-files.ts
+import { getFilesAction } from "@/actions/files.actions";
+
+export function useGoogleDriveFiles(folderId?: string) {
+  return useQuery({
+    queryKey: ["googleDrive", folderId],
+    queryFn: () => getFilesAction(folderId),
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  });
 }
 ```
 
@@ -118,9 +130,10 @@ afterEach(() => {
 ```
 src/infra/
 ├── adapters/     # api/ (real) and test/ (test doubles)
-├── mappers/     # api-mappers.ts
-├── modules/     # di-container, di-container.init, http-client
-└── types/       # api-types.ts
+├── mappers/      # api-mappers.ts
+├── modules/      # di-container, di-container.init, http-client
+├── types/        # api-types.ts
+└── utils/        # get-env.ts
 
 src/domain/
 ├── ports/        # Repository interfaces
