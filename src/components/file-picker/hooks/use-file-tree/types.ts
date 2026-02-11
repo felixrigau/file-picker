@@ -1,11 +1,9 @@
-import type { FileNode } from "@/domain/types";
-import type { DisplayRow } from "@/components/file-table";
-import type { SortOrder } from "@/domain/types";
+import type { BreadcrumbSegment } from "@/domain/types";
 
-export interface BreadcrumbSegment {
-  id: string;
-  name: string;
-}
+export type { BreadcrumbSegment };
+
+import type { FileNode, SortOrder } from "@/domain/types";
+import type { DisplayRow } from "@/components/file-table";
 
 export interface UseFileTreeParams {
   sortedResources: FileNode[];

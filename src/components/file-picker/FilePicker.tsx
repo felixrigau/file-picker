@@ -1,11 +1,5 @@
 "use client";
 
-import { useGDriveFiles, useIndexedResourceIds } from "@/hooks";
-import {
-  useFileActions,
-  useFileFilters,
-  useFileTree,
-} from "./hooks";
 import {
   FilePickerBreadcrumbs,
   FilePickerContentContainer,
@@ -13,44 +7,45 @@ import {
   FilePickerLayout,
   FilePickerSearch,
 } from "./components";
+import type { FilePickerProps } from "./FilePicker.types";
 import { FileTable } from "@/components/file-table";
 import { FilterBar } from "@/components/filter-bar";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useFileFilters, createUseFileTree } from "./hooks";
+import { useGDriveFolderChildren } from "@/hooks";
 
-export function FilePicker() {
-  const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(
-    undefined,
-  );
+const useFileTree = createUseFileTree(useGDriveFolderChildren);
 
-  const { data, isLoading, isError, error, refetch } =
-    useGDriveFiles(currentFolderId);
-  const indexedIdsRaw = useIndexedResourceIds();
-  const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
+/**
+ * FilePicker — UI logic (filters, tree) is internal. Receives data + actions from container.
+ * useFileFilters and useFileTree are pure UI; useFileActions stays in container (data layer).
+ */
+export function FilePicker({
+  rawItems,
+  indexedIds,
+  isLoading,
+  hasError,
+  errorMessage,
+  onIndexRequest,
+  onDeIndexRequest,
+  isIndexPending,
+  isDeIndexPending,
+  onRefetch,
+  onCurrentFolderChange,
+}: FilePickerProps) {
+  const indexedIdsSet = useMemo(() => new Set(indexedIds), [indexedIds]);
 
   const filter = useFileFilters({
-    rawItems: data?.items ?? [],
-    indexedIds,
+    rawItems,
+    indexedIds: indexedIdsSet,
   });
 
   const tree = useFileTree({
     sortedResources: filter.data.processedResources,
     sortOrder: filter.data.sortOrder,
-    onCurrentFolderChange: setCurrentFolderId,
+    onCurrentFolderChange,
     onNavigateStart: () => filter.action.setSearch(""),
   });
-
-  const indexing = useFileActions({
-    isError,
-    error: error instanceof Error ? error : null,
-    onRefetch: refetch,
-  });
-
-  const emptyMessage =
-    (data?.items?.length ?? 0) === 0
-      ? "No files or folders"
-      : "No files found";
-
-  const hasError = indexing.data.hasGenericError;
 
   return (
     <FilePickerLayout>
@@ -73,15 +68,13 @@ export function FilePicker() {
         <FilePickerSearch
           value={filter.data.search}
           onChange={filter.action.setSearch}
+          aria-label="Search files and folders"
         />
       </div>
 
       <FilePickerContentContainer>
         {hasError ? (
-          <FilePickerError
-            message={indexing.data.errorMessage}
-            onRetry={indexing.action.refetch}
-          />
+          <FilePickerError message={errorMessage} onRetry={onRefetch} />
         ) : (
           <FileTable
             resources={tree.data.displayedResources}
@@ -90,16 +83,18 @@ export function FilePicker() {
             onFolderHoverCancel={tree.action.onFolderHoverCancel}
             onFolderToggle={tree.action.onFolderToggle}
             expandedIds={tree.data.expandedIds}
-            indexedIds={indexedIdsRaw}
-            onIndexRequest={indexing.action.handleIndex}
-            onDeIndexRequest={indexing.action.handleDeIndex}
-            isIndexPending={indexing.data.isIndexPending}
-            isDeIndexPending={indexing.data.isDeIndexPending}
+            indexedIds={indexedIds}
+            onIndexRequest={onIndexRequest}
+            onDeIndexRequest={onDeIndexRequest}
+            isIndexPending={isIndexPending}
+            isDeIndexPending={isDeIndexPending}
             sortOrder={filter.data.sortOrder}
             onSortToggle={filter.action.toggleSort}
-            emptyMessage={emptyMessage}
+            emptyMessage="No files found"
             onResetFilters={
-              filter.data.hasActiveFilters ? filter.action.clearFilters : undefined
+              filter.data.hasActiveFilters
+                ? filter.action.clearFilters
+                : undefined
             }
           />
         )}

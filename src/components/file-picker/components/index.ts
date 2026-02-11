@@ -1,5 +1,5 @@
 export { FilePickerBreadcrumbs } from "./FilePickerBreadcrumbs";
-export type { BreadcrumbSegment, FilePickerBreadcrumbsProps } from "./FilePickerBreadcrumbs";
+export type { FilePickerBreadcrumbsProps } from "./FilePickerBreadcrumbs";
 
 export { FilePickerSearch } from "./FilePickerSearch";
 export type { FilePickerSearchProps } from "./FilePickerSearch";

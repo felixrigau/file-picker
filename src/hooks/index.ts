@@ -1,4 +1,5 @@
 export { useGDriveFiles } from "./use-gdrive-files";
+export { useGDriveFolderChildren } from "./use-gdrive-folder-children";
 export {
   useActiveKnowledgeBaseId,
   useIndexedResourceIds,

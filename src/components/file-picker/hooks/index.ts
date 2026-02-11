@@ -1,6 +1,6 @@
 export { useFileActions } from "./use-file-actions";
 export { useFileFilters } from "./use-file-filters";
-export { useFileTree } from "./use-file-tree";
+export { createUseFileTree } from "./use-file-tree";
 
 export type {
   FileFiltersActions,
@@ -8,6 +8,7 @@ export type {
 } from "./use-file-filters/types";
 
 export type {
+  BreadcrumbSegment,
   UseFileTreeParams,
   UseFileTreeResult,
 } from "./use-file-tree/types";

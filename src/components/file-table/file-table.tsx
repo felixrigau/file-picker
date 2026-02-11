@@ -32,7 +32,12 @@ export function FileTable({
 
   if (isLoading) {
     return (
-      <table className="w-full table-fixed text-sm">
+      <table
+        className="w-full table-fixed text-sm"
+        role="table"
+        aria-busy="true"
+        aria-label="File list"
+      >
         <ColumnsHeader />
         <tbody>
           {Array.from({ length: SKELETON_ROW_COUNT }).map((_, index) => (
@@ -67,7 +72,11 @@ export function FileTable({
   }
 
   return (
-    <table className="w-full table-fixed text-sm">
+    <table
+      className="w-full table-fixed text-sm"
+      role="table"
+      aria-label="File list"
+    >
       <ColumnsHeader sortOrder={sortOrder} onSortToggle={onSortToggle} />
       <tbody>
         {resources.map((row) =>

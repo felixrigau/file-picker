@@ -1,11 +1,7 @@
 "use client";
 
+import type { BreadcrumbSegment } from "@/domain/types";
 import { ChevronRight } from "lucide-react";
-
-export interface BreadcrumbSegment {
-  id: string;
-  name: string;
-}
 
 export interface FilePickerBreadcrumbsProps {
   breadcrumbPath: BreadcrumbSegment[];
@@ -23,6 +19,7 @@ export function FilePickerBreadcrumbs({
     >
       <button
         type="button"
+        aria-label="Navigate to root"
         onClick={() => onNavigate(undefined)}
         className="rounded px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
@@ -30,9 +27,10 @@ export function FilePickerBreadcrumbs({
       </button>
       {breadcrumbPath.map((segment) => (
         <span key={segment.id} className="flex items-center gap-2">
-          <ChevronRight className="size-4 text-muted-foreground" />
+          <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
           <button
             type="button"
+            aria-label={`Navigate to ${segment.name}`}
             onClick={() => onNavigate(segment.id, segment.name)}
             className="rounded px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >

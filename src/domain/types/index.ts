@@ -51,3 +51,9 @@ export interface IndexValidationResult {
   success: boolean;
   error?: string;
 }
+
+/** Breadcrumb segment for file picker navigation */
+export interface BreadcrumbSegment {
+  id: string;
+  name: string;
+}

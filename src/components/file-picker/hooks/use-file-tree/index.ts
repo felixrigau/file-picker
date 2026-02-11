@@ -1,4 +1,4 @@
-export { useFileTree } from "./use-file-tree";
+export { createUseFileTree } from "./use-file-tree";
 export type {
   BreadcrumbSegment,
   UseFileTreeParams,
