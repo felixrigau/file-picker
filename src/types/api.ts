@@ -1,6 +1,6 @@
 /**
  * API (transport) types — Backend contract.
- * Used only by api-service and api-mappers. Never import in View layer.
+ * Used only by adapters and api-mappers. Never import in View layer.
  */
 
 /** Paginated response from API (snake_case). */

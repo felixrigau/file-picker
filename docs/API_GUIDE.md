@@ -1,10 +1,10 @@
-# API Service — Usage Guide
+# Repository Layer — Usage Guide
 
-Client for the backend API and Supabase Auth. This guide covers setup, usage, and examples.
+Ports & Adapters architecture for backend API access. This guide covers setup, usage, and examples.
 
 ## Overview
 
-The **ApiService** is a singleton that centralizes calls to the backend (GDrive connections, knowledge bases, sync). Use it only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
+Data access is abstracted behind **ports** (interfaces). The **container** wires adapters (implementations) and exposes them via getters. Use only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
 
 ## Requirements
 
@@ -14,12 +14,14 @@ Environment variables (see `.env.local.example`):
 - `STACK_AI_EMAIL` — Account email (server-side only)
 - `STACK_AI_PASSWORD` — Account password (server-side only)
 
-## Getting the Instance
+## Getting Repositories
 
 ```ts
-import { getApiService } from "@/lib/api-service";
-
-const service = getApiService();
+import {
+  getConnectionRepository,
+  getFileResourceRepository,
+  getKnowledgeBaseRepository,
+} from "@/lib/container";
 ```
 
 ## Examples
@@ -27,50 +29,90 @@ const service = getApiService();
 ### List root of Google Drive
 
 ```ts
-const { data } = await service.fetchGDriveContents();
-// data: { data: ApiResource[], next_cursor, current_cursor }
+const fileRepo = getFileResourceRepository();
+const response = await fileRepo.fetchContents();
+// response: { data: ApiResource[], next_cursor, current_cursor }
 ```
 
 ### Navigate to a folder (by resource_id)
 
 ```ts
-const { data } = await service.fetchGDriveContents("1YeS8H92ZmTZ3r2tLn1m43GG58gRzvYiM");
+const response = await getFileResourceRepository().fetchContents(
+  "1YeS8H92ZmTZ3r2tLn1m43GG58gRzvYiM"
+);
 ```
 
 ### Create knowledge base and index resources
 
 ```ts
-const connectionId = await service.getConnectionId();
-const { knowledge_base_id } = await service.syncToKnowledgeBase(connectionId, [
-  "1YeS8H92ZmTZ3r2tLn1m43GG58gRzvYiM",  // folder
-  "1wWBg9mJkWFJUbEdRjjjkX4jf7TYmE__GRRfAjSh6fzs",  // file
-]);
+const connectionId = await getConnectionRepository().getConnectionId();
+const { knowledge_base_id } = await getKnowledgeBaseRepository().sync(
+  connectionId,
+  [
+    "1YeS8H92ZmTZ3r2tLn1m43GG58gRzvYiM",  // folder
+    "1wWBg9mJkWFJUbEdRjjjkX4jf7TYmE__GRRfAjSh6fzs",  // file
+  ]
+);
 ```
 
 ### Remove a resource from the knowledge base
 
 ```ts
-await service.deleteFromKnowledgeBase(knowledge_base_id, "papers/self_rag.pdf");
+await getKnowledgeBaseRepository().delete(
+  knowledge_base_id,
+  "papers/self_rag.pdf"
+);
 ```
 
 ### With TanStack Query (API route or Server Action)
 
-Expose the service via a Route Handler so the client can call it with TanStack Query:
+Expose via a Route Handler so the client can call it with TanStack Query:
 
 ```ts
 // app/api/drive/route.ts
-import { getApiService } from "@/lib/api-service";
+import { getFileResourceRepository } from "@/lib/container";
+import { mapPaginatedApiResponseToResult } from "@/lib/api-mappers";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const service = getApiService();
-  const result = await service.fetchGDriveContents(
+  const apiResponse = await getFileResourceRepository().fetchContents(
     searchParams.get("folderId") ?? undefined
   );
-  return Response.json(result);
+  const domainResult = mapPaginatedApiResponseToResult(
+    apiResponse,
+    searchParams.get("folderId") ?? undefined
+  );
+  return Response.json(domainResult);
 }
+```
+
+## Test Implementations
+
+For unit tests, use the test implementations from `@/lib/adapters/test`:
+
+```ts
+import {
+  AuthRepositoryTestImpl,
+  ConnectionRepositoryTestImpl,
+  FileResourceRepositoryTestImpl,
+  KnowledgeBaseRepositoryTestImpl,
+} from "@/lib/adapters/test";
+import { setRepositories, resetRepositories } from "@/lib/container";
+
+beforeEach(() => {
+  setRepositories({
+    authRepository: new AuthRepositoryTestImpl(),
+    connectionRepository: new ConnectionRepositoryTestImpl(),
+    fileResourceRepository: new FileResourceRepositoryTestImpl(),
+    knowledgeBaseRepository: new KnowledgeBaseRepositoryTestImpl(),
+  });
+});
+
+afterEach(() => {
+  resetRepositories();
+});
 ```
 
 ## API Reference
 
-For parameter and return types, see the generated TypeDoc output in `docs/api-reference/` (run `npm run docs:generate` to build).
+For port definitions and types, see `src/lib/ports/` and the generated TypeDoc output in `docs/api-reference/` (run `npm run docs:generate` to build).

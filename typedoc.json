@@ -1,5 +1,5 @@
 {
-  "entryPoints": ["src/lib/api-service.ts"],
+  "entryPoints": ["src/lib/container.ts", "src/lib/ports", "src/lib/adapters"],
   "out": "docs/api-reference",
   "name": "File Picker API",
   "includeVersion": true,
