@@ -1,17 +1,8 @@
 import type { ApiAuthResponse, ApiOrgResponse } from "@/infra/types/api-types";
 import type { AuthRepository } from "@/domain/ports/auth-repository.port";
+import { getEnv } from "@/infra/utils/get-env";
 
-const SUPABASE_AUTH_URL = "https://sb.stack-ai.com";
-const BACKEND_URL = "https://api.stack-ai.com";
 const REQUEST_TIMEOUT_MS = 10_000;
-
-function getEnv(key: string): string {
-  const value = process.env[key];
-  if (value == null || value === "") {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-  return value;
-}
 
 export class AuthRepositoryImpl implements AuthRepository {
   private tokenPromise: Promise<string> | null = null;
@@ -24,7 +15,7 @@ export class AuthRepositoryImpl implements AuthRepository {
     const password = getEnv("STACK_AI_PASSWORD");
     const anonKey = getEnv("NEXT_PUBLIC_STACK_AI_ANON_KEY");
 
-    const url = `${SUPABASE_AUTH_URL}/auth/v1/token?grant_type=password`;
+    const url = `${getEnv("STACK_AI_SUPABASE_AUTH_URL")}/auth/v1/token?grant_type=password`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -68,7 +59,7 @@ export class AuthRepositoryImpl implements AuthRepository {
 
   async getOrganizationId(): Promise<string> {
     const token = await this.getAccessToken();
-    const url = `${BACKEND_URL}/organizations/me/current`;
+    const url = `${getEnv("STACK_AI_BACKEND_URL")}/organizations/me/current`;
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,

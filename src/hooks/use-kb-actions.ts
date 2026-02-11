@@ -3,13 +3,15 @@
 import {
   deleteFromKnowledgeBaseAction,
   deleteFromKnowledgeBaseBatchAction,
-  getConnectionIdAction,
+  syncToKnowledgeBaseAction,
+} from "@/actions/knowledge-base.actions";
+import { getConnectionIdAction } from "@/actions/connection.actions";
+import {
   getDescendantResourceIdsAction,
   getDescendantResourcesWithPathsAction,
-  syncToKnowledgeBaseAction,
-} from "@/app/actions/server-actions";
-import { useCallback } from "react";
+} from "@/actions/files.actions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { toast } from "sonner";
 import { queryKeys } from "./query-keys";
 
@@ -66,8 +68,7 @@ export function useKBActions() {
   const indexResource = useMutation({
     mutationFn: async (variables: IndexVariables) => {
       const { connectionId } = await getConnectionIdAction();
-      const resourceIds =
-        variables.expandedIds ?? [variables.node.id];
+      const resourceIds = variables.expandedIds ?? [variables.node.id];
       return syncToKnowledgeBaseAction(connectionId, resourceIds);
     },
     onMutate: async (variables) => {
@@ -88,7 +89,13 @@ export function useKBActions() {
         expandedIds.forEach((id) => set.add(id));
         return [...set];
       });
-      return { previous, toastId, expandedIds, isFolder, folderName: variables.node.name };
+      return {
+        previous,
+        toastId,
+        expandedIds,
+        isFolder,
+        folderName: variables.node.name,
+      };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous != null) {
@@ -102,17 +109,15 @@ export function useKBActions() {
     onSuccess: (result, variables, context) => {
       queryClient.setQueryData(ACTIVE_KB_KEY, result.knowledge_base_id);
       if (context?.toastId != null) {
-        const msg =
-          context.isFolder
-            ? `All content in '${context.folderName}' has been indexed.`
-            : "File indexed successfully";
+        const msg = context.isFolder
+          ? `All content in '${context.folderName}' has been indexed.`
+          : "File indexed successfully";
         toast.success(msg, { id: context.toastId });
       }
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        predicate: (query) =>
-          query.queryKey[0] === "gdrive",
+        predicate: (query) => query.queryKey[0] === "gdrive",
       });
     },
   });
@@ -144,7 +149,9 @@ export function useKBActions() {
     onSuccess: (result, _vars, context) => {
       queryClient.setQueryData(ACTIVE_KB_KEY, result.knowledge_base_id);
       if (context?.toastId != null) {
-        toast.success("Selection indexed successfully", { id: context.toastId });
+        toast.success("Selection indexed successfully", {
+          id: context.toastId,
+        });
       }
     },
     onSettled: () => {
@@ -167,7 +174,6 @@ export function useKBActions() {
     },
     [indexResource],
   );
-
 
   type DeIndexVariables = {
     knowledgeBaseId: string;
@@ -202,8 +208,7 @@ export function useKBActions() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        predicate: (query) =>
-          query.queryKey[0] === "gdrive",
+        predicate: (query) => query.queryKey[0] === "gdrive",
       });
     },
   });
@@ -215,18 +220,13 @@ export function useKBActions() {
   };
 
   const deIndexFolder = useMutation({
-    mutationFn: async ({
-      knowledgeBaseId,
-      items,
-    }: DeIndexFolderVariables) =>
+    mutationFn: async ({ knowledgeBaseId, items }: DeIndexFolderVariables) =>
       deleteFromKnowledgeBaseBatchAction(knowledgeBaseId, items),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: INDEXED_IDS_KEY });
       const previous = queryClient.getQueryData<string[]>(INDEXED_IDS_KEY);
       const toastId = toast.loading("Processing folder content...");
-      const affectedIds = new Set(
-        variables.items.map((i) => i.resourceId),
-      );
+      const affectedIds = new Set(variables.items.map((i) => i.resourceId));
       queryClient.setQueryData<string[]>(INDEXED_IDS_KEY, (old) =>
         (old ?? []).filter((id) => !affectedIds.has(id)),
       );
@@ -248,10 +248,9 @@ export function useKBActions() {
     onSuccess: (result, _vars, context) => {
       if (context?.toastId != null) {
         if (result.errorCount > 0) {
-          toast.error(
-            `Folder removed with ${result.errorCount} errors.`,
-            { id: context.toastId },
-          );
+          toast.error(`Folder removed with ${result.errorCount} errors.`, {
+            id: context.toastId,
+          });
         } else {
           toast.success(
             `All content in '${context.folderName}' has been removed from index.`,

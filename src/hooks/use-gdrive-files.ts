@@ -1,6 +1,6 @@
 "use client";
 
-import { getFilesAction } from "@/app/actions/server-actions";
+import { getFilesAction } from "@/actions/files.actions";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "./query-keys";
 

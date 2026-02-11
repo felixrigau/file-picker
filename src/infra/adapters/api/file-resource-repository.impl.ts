@@ -3,8 +3,7 @@ import type { HttpClient } from "../../modules/http-client";
 import type { ConnectionRepository } from "@/domain/ports/connection-repository.port";
 import type { FileResourceRepository } from "@/domain/ports/file-resource-repository.port";
 import { mapPaginatedApiResponseToResult } from "@/infra/mappers/api-mappers";
-
-const BACKEND_URL = "https://api.stack-ai.com";
+import { getEnv } from "@/infra/utils/get-env";
 
 export class FileResourceRepositoryImpl implements FileResourceRepository {
   constructor(
@@ -14,7 +13,7 @@ export class FileResourceRepositoryImpl implements FileResourceRepository {
 
   async fetchContents(folderId?: string) {
     const connectionId = await this.connectionRepository.getConnectionId();
-    const baseUrl = `${BACKEND_URL}/v1/connections/${connectionId}/resources/children`;
+    const baseUrl = `${getEnv("STACK_AI_BACKEND_URL")}/v1/connections/${connectionId}/resources/children`;
     const url = folderId
       ? `${baseUrl}?${new URLSearchParams({ resource_id: folderId }).toString()}`
       : baseUrl;

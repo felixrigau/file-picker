@@ -70,8 +70,8 @@ There are two flows:
                                    │ get*Repository() returns instances
                                    ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  app/actions/server-actions.ts (thin wrappers)                            │
-│  getFilesAction() → getFilesUseCase(getFileResourceRepository(), ...)     │
+│  app/actions/ (barrel: server-actions.ts)                                │
+│  files.actions.ts | connection.actions.ts | knowledge-base.actions.ts    │
 │  getConnectionIdAction() → getConnectionIdUseCase(getConnectionRepo())    │
 │  ...                                                                     │
 └──────────────────────────────────────┬───────────────────────────────────┘
@@ -127,6 +127,7 @@ afterEach(() => {
 ```
 src/infra/
 ├── adapters/        # API implementations (api/) and test doubles (test/)
+├── config/          # env.ts (getEnv)
 ├── mappers/         # api-mappers.ts (API → domain mapping)
 ├── modules/         # DI Container, HttpClient, init bootstrap
 │   ├── di-container.ts

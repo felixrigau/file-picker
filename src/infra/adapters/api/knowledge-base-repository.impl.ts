@@ -6,8 +6,7 @@ import type {
 import type { HttpClient } from "../../modules/http-client";
 import type { AuthRepository } from "@/domain/ports/auth-repository.port";
 import type { KnowledgeBaseRepository } from "@/domain/ports/knowledge-base-repository.port";
-
-const BACKEND_URL = "https://api.stack-ai.com";
+import { getEnv } from "@/infra/utils/get-env";
 
 export class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
   constructor(
@@ -47,7 +46,7 @@ export class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
       cron_job_id: null,
     };
 
-    const createUrl = `${BACKEND_URL}/knowledge_bases`;
+    const createUrl = `${getEnv("STACK_AI_BACKEND_URL")}/knowledge_bases`;
     const createRes =
       await this.httpClient.request<CreateKnowledgeBaseResponse>(
         "POST",
@@ -57,14 +56,14 @@ export class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
         },
       );
 
-    const syncUrl = `${BACKEND_URL}/knowledge_bases/sync/trigger/${createRes.knowledge_base_id}/${orgId}`;
+    const syncUrl = `${getEnv("STACK_AI_BACKEND_URL")}/knowledge_bases/sync/trigger/${createRes.knowledge_base_id}/${orgId}`;
     await this.httpClient.request<unknown>("GET", syncUrl);
 
     return { knowledge_base_id: createRes.knowledge_base_id };
   }
 
   async delete(knowledgeBaseId: string, resourcePath: string): Promise<void> {
-    const baseUrl = `${BACKEND_URL}/knowledge_bases/${knowledgeBaseId}/resources`;
+    const baseUrl = `${getEnv("STACK_AI_BACKEND_URL")}/knowledge_bases/${knowledgeBaseId}/resources`;
     const url = `${baseUrl}?${new URLSearchParams({ resource_path: resourcePath }).toString()}`;
     await this.httpClient.request<unknown>("DELETE", url);
   }

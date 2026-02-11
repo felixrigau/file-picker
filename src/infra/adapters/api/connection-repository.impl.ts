@@ -1,7 +1,6 @@
 import type { HttpClient } from "../../modules/http-client";
 import type { ConnectionRepository } from "@/domain/ports/connection-repository.port";
-
-const BACKEND_URL = "https://api.stack-ai.com";
+import { getEnv } from "@/infra/utils/get-env";
 
 type ConnectionListResponse =
   | Array<{ connection_id: string }>
@@ -15,7 +14,7 @@ export class ConnectionRepositoryImpl implements ConnectionRepository {
   constructor(private readonly httpClient: HttpClient) {}
 
   async getConnectionId(): Promise<string> {
-    const url = `${BACKEND_URL}/v1/connections?limit=10`;
+    const url = `${getEnv("STACK_AI_BACKEND_URL")}/v1/connections?limit=10`;
     const response = await this.httpClient.request<ConnectionListResponse>(
       "GET",
       url,

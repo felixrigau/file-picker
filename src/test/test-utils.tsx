@@ -97,7 +97,8 @@ export interface RenderWithProvidersOptions extends Omit<RenderOptions, "wrapper
  * queryClient.setQueryData(queryKeys.indexedIds(), ["file-1"]);
  * ```
  *
- * @remarks Mock `@/app/actions/server-actions` at the test file level before importing components.
+ * @remarks Tests exercise use cases with repository TestImpl — via setRepositories
+ * (integration) or by passing TestImpl directly to use cases (unit tests).
  */
 export function renderWithProviders(
   ui: ReactElement,
