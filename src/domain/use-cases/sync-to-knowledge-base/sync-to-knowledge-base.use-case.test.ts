@@ -1,12 +1,17 @@
-import { KnowledgeBaseRepositoryTestImpl } from "@/infra/adapters/test";
+import {
+  AuthRepositoryTestImpl,
+  KnowledgeBaseRepositoryTestImpl,
+} from "@/infra/adapters/test";
 import { describe, expect, it } from "vitest";
 import { syncToKnowledgeBaseUseCase } from "./sync-to-knowledge-base.use-case";
 
 describe("syncToKnowledgeBaseUseCase", () => {
   it("delegates to repo and returns knowledge_base_id", async () => {
+    const authRepo = new AuthRepositoryTestImpl("token", "org-123");
     const kbRepo = new KnowledgeBaseRepositoryTestImpl("kb-xyz");
 
     const result = await syncToKnowledgeBaseUseCase(
+      authRepo,
       kbRepo,
       "conn-1",
       ["id1", "id2"],
@@ -17,11 +22,13 @@ describe("syncToKnowledgeBaseUseCase", () => {
     expect(kbRepo.syncCalls[0]).toEqual({
       connectionId: "conn-1",
       resourceIds: ["id1", "id2"],
+      orgId: "org-123",
       indexingParams: undefined,
     });
   });
 
   it("passes indexingParams when provided", async () => {
+    const authRepo = new AuthRepositoryTestImpl();
     const kbRepo = new KnowledgeBaseRepositoryTestImpl("kb-1");
     const indexingParams = {
       ocr: true,
@@ -33,8 +40,15 @@ describe("syncToKnowledgeBaseUseCase", () => {
       },
     };
 
-    await syncToKnowledgeBaseUseCase(kbRepo, "conn-1", ["r1"], indexingParams);
+    await syncToKnowledgeBaseUseCase(
+      authRepo,
+      kbRepo,
+      "conn-1",
+      ["r1"],
+      indexingParams,
+    );
 
     expect(kbRepo.syncCalls[0].indexingParams).toEqual(indexingParams);
+    expect(kbRepo.syncCalls[0].orgId).toBe("test-org-id");
   });
 });

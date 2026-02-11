@@ -18,6 +18,7 @@ import type {
 } from "@/domain/ports";
 
 let authRepository: AuthRepository | null = null;
+let httpClient: HttpClient | null = null;
 let connectionRepository: ConnectionRepository | null = null;
 let fileResourceRepository: FileResourceRepository | null = null;
 let knowledgeBaseRepository: KnowledgeBaseRepository | null = null;
@@ -29,19 +30,24 @@ function getAuthRepository(): AuthRepository {
   return authRepository;
 }
 
+function getHttpClient(): HttpClient {
+  if (httpClient === null) {
+    httpClient = new HttpClient();
+  }
+  return httpClient;
+}
+
 function getConnectionRepository(): ConnectionRepository {
   if (connectionRepository === null) {
-    const httpClient = HttpClient.getInstance(getAuthRepository());
-    connectionRepository = new ConnectionRepositoryImpl(httpClient);
+    connectionRepository = new ConnectionRepositoryImpl(getHttpClient());
   }
   return connectionRepository;
 }
 
 function getFileResourceRepository(): FileResourceRepository {
   if (fileResourceRepository === null) {
-    const httpClient = HttpClient.getInstance(getAuthRepository());
     fileResourceRepository = new FileResourceRepositoryImpl(
-      httpClient,
+      getHttpClient(),
       getConnectionRepository(),
     );
   }
@@ -50,11 +56,7 @@ function getFileResourceRepository(): FileResourceRepository {
 
 function getKnowledgeBaseRepository(): KnowledgeBaseRepository {
   if (knowledgeBaseRepository === null) {
-    const httpClient = HttpClient.getInstance(getAuthRepository());
-    knowledgeBaseRepository = new KnowledgeBaseRepositoryImpl(
-      httpClient,
-      getAuthRepository(),
-    );
+    knowledgeBaseRepository = new KnowledgeBaseRepositoryImpl(getHttpClient());
   }
   return knowledgeBaseRepository;
 }
@@ -79,10 +81,10 @@ export function setRepositories(overrides: {
 /** Reset to defaults. Use in afterEach for tests. */
 export function resetRepositories(): void {
   authRepository = null;
+  httpClient = null;
   connectionRepository = null;
   fileResourceRepository = null;
   knowledgeBaseRepository = null;
-  HttpClient.resetInstance();
 }
 
 /**

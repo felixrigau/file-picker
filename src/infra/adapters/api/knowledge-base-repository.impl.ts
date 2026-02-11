@@ -4,23 +4,18 @@ import type {
   IndexingParams,
 } from "@/infra/types/api-types";
 import type { HttpClient } from "../../modules/http-client";
-import type { AuthRepository } from "@/domain/ports/auth-repository.port";
 import type { KnowledgeBaseRepository } from "@/domain/ports/knowledge-base-repository.port";
 import { getEnv } from "@/infra/utils/get-env";
 
 export class KnowledgeBaseRepositoryImpl implements KnowledgeBaseRepository {
-  constructor(
-    private readonly httpClient: HttpClient,
-    private readonly authRepository: AuthRepository,
-  ) {}
+  constructor(private readonly httpClient: HttpClient) {}
 
   async sync(
     connectionId: string,
     resourceIds: string[],
+    orgId: string,
     indexingParams?: Partial<IndexingParams>,
   ): Promise<{ knowledge_base_id: string }> {
-    const orgId = await this.authRepository.getOrganizationId();
-
     const defaultIndexingParams: IndexingParams = {
       ocr: false,
       unstructured: true,
