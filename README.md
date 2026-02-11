@@ -38,6 +38,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
+## Performance decisions
+
+- **Lazy components** — `LazyFilePicker`, `LazySpeedInsights`, `LazyToaster` load via `next/dynamic` (`ssr: false`) to reduce initial bundle and improve LCP.
+- **Server prefetch** — initial file list is fetched on the server and hydrated with `HydrationBoundary`; client skips first fetch.
+- **Streaming** — page shell (h1, skeleton) streams first; `FilePickerWithPrefetch` suspends until prefetch completes, then sends data + client reference.
+- **Font `display: swap`** — Geist fonts use `display: "swap"` so text paints immediately with fallback.
+- **`optimizePackageImports`** — Next.js only bundles used modules from `lucide-react`, `radix-ui`.
+- **Browserslist** — targets modern browsers (Chrome 111+, Safari 16.4+) to avoid legacy polyfills.
+
+---
+
 ## Lighthouse
 
 **Command:** `npm run audit:ci` — builds, audits [production URL](https://file-picker-smoky.vercel.app/), uploads reports.
