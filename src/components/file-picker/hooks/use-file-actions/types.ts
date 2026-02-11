@@ -4,6 +4,8 @@ export interface UseFileActionsParams {
   isError: boolean;
   error: Error | null;
   onRefetch?: () => void;
+  onIndexError?: (resourceIds: string[]) => void;
+  onDeIndexError?: (resourceIds: string[]) => void;
 }
 
 export interface UseFileActionsResult {

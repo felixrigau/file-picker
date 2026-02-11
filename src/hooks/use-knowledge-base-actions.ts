@@ -23,14 +23,17 @@ const ACTIVE_KNOWLEDGE_BASE_KEY = queryKeys.activeKnowledgeBaseId();
 /**
  * Returns the set of resource_ids currently considered indexed (for isIndexed UI).
  * Updated optimistically by indexResource / deIndexResource.
+ * queryFn preserves existing cache so optimistic updates are not overwritten on refetch.
  */
 export function useIndexedResourceIds(): string[] {
+  const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: INDEXED_IDS_KEY,
-    queryFn: () => [] as string[],
+    queryFn: () => queryClient.getQueryData<string[]>(INDEXED_IDS_KEY) ?? [],
     initialData: [] as string[],
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
   return data ?? [];
 }
@@ -68,27 +71,40 @@ export function useKnowledgeBaseActions() {
   const indexResource = useMutation({
     mutationFn: async (variables: IndexVariables) => {
       const { connectionId } = await getConnectionIdAction();
-      const resourceIds = variables.expandedIds ?? [variables.node.id];
+      const resourceIds =
+        variables.node.type === "folder"
+          ? await getDescendantResourceIdsAction(variables.node.id)
+          : variables.expandedIds ?? [variables.node.id];
+
+      // For folders: update indexedIds with full descendants before API call
+      // so expanded children show as indexed immediately when user expands mid-mutation
+      if (variables.node.type === "folder" && resourceIds.length > 1) {
+        queryClient.setQueryData<string[]>(INDEXED_IDS_KEY, (old) => {
+          const set = new Set(old ?? []);
+          resourceIds.forEach((id) => set.add(id));
+          return [...set];
+        });
+      }
+
       return syncToKnowledgeBaseAction(connectionId, resourceIds);
     },
     onMutate: async (variables) => {
-      const expandedIds =
-        variables.expandedIds ??
-        (variables.node.type === "folder"
-          ? await getDescendantResourceIdsAction(variables.node.id)
-          : [variables.node.id]);
-
-      await queryClient.cancelQueries({ queryKey: INDEXED_IDS_KEY });
-      const previous = queryClient.getQueryData<string[]>(INDEXED_IDS_KEY);
+      // Use passed expandedIds for instant optimistic update (folder: [node.id], file: [node.id])
+      const expandedIds = variables.expandedIds ?? [variables.node.id];
       const isFolder = variables.node.type === "folder";
       const toastId = toast.loading(
         isFolder ? "Processing folder content..." : "Indexing file...",
       );
+
+      // Update cache first (synchronously) so UI reflects change immediately
+      await queryClient.cancelQueries({ queryKey: INDEXED_IDS_KEY });
+      const previous = queryClient.getQueryData<string[]>(INDEXED_IDS_KEY);
       queryClient.setQueryData<string[]>(INDEXED_IDS_KEY, (old) => {
         const set = new Set(old ?? []);
         expandedIds.forEach((id) => set.add(id));
         return [...set];
       });
+
       return {
         previous,
         toastId,
@@ -169,14 +185,9 @@ export function useKnowledgeBaseActions() {
 
   const indexNode = useCallback(
     (node: { id: string; name: string; type: "file" | "folder" }) => {
-      const run = async () => {
-        const expandedIds =
-          node.type === "folder"
-            ? await getDescendantResourceIdsAction(node.id)
-            : [node.id];
-        indexResource.mutate({ node, expandedIds });
-      };
-      run();
+      // Fire immediately with [node.id] for instant optimistic UI (folder + file).
+      // mutationFn fetches full descendants for folders before API call.
+      indexResource.mutate({ node, expandedIds: [node.id] });
     },
     [indexResource],
   );
