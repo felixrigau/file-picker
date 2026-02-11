@@ -1,7 +1,7 @@
 import { FilePickerShell } from "../FilePickerShell";
 import { createTestQueryClient, renderWithProviders } from "@/test/test-utils";
 import { queryKeys } from "@/hooks/query-keys";
-import type { FileNode, PaginatedFileNodes } from "@/domain/types";
+import type { FileNode } from "@/domain/types";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   fireEvent,
@@ -420,7 +420,6 @@ describe("FilePickerShell", () => {
       const removeBtn = within(table).getByRole("button", { name: /Remove/ });
       fireEvent.click(removeBtn);
 
-      const OPTIMISTIC_TIMEOUT_MS = 100;
       await waitFor(
         () => {
           expect(toast.loading).toHaveBeenCalledWith("Removing from index...");

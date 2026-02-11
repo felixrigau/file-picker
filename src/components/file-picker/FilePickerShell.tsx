@@ -30,9 +30,12 @@ import {
 } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { DisplayRow } from "./FileTable";
-import { FileTable } from "./FileTable";
-import { FilterPills } from "./FilterPills";
+import {
+  FileTable,
+  type DisplayRow,
+  type SortOrder,
+} from "@/components/file-table";
+import { FilterBar } from "@/components/filter-bar";
 
 /** Single breadcrumb segment: id for navigation, name for display */
 interface BreadcrumbSegment {
@@ -42,8 +45,6 @@ interface BreadcrumbSegment {
 
 /** Fixed shell height (80vh) to prevent layout jumps when content changes */
 const SHELL_HEIGHT = "h-[80vh]";
-
-type SortOrder = "asc" | "desc";
 
 const SORT_ORDER_PARAM = "sortOrder";
 const STATUS_PARAM = "status";
@@ -438,7 +439,7 @@ export function FilePickerShell() {
       {/* Search & Filter row — Pill filters (left, grow), search (right, 40%) */}
       <div className="flex shrink-0 items-center gap-2">
         <div className="min-w-0 flex-1">
-          <FilterPills
+          <FilterBar
             status={statusFilter}
             type={typeFilter}
             onStatusChange={handleStatusChange}

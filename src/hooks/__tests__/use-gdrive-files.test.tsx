@@ -1,6 +1,6 @@
 import { useGDriveFiles } from "@/hooks/use-gdrive-files";
 import { createWrapper } from "@/test/test-utils";
-import type { FileNode, PaginatedFileNodes } from "@/domain/types";
+import type { FileNode } from "@/domain/types";
 import { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
