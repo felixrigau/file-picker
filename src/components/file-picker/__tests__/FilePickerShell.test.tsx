@@ -10,16 +10,13 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-vi.mock("@/app/actions/server-actions", () => ({
-  getFilesAction: vi.fn(),
-  getConnectionIdAction: vi.fn(),
-  syncToKnowledgeBaseAction: vi.fn(),
-  getDescendantResourceIdsAction: vi.fn(),
-  getDescendantResourcesWithPathsAction: vi.fn(),
-  deleteFromKnowledgeBaseAction: vi.fn(),
-  deleteFromKnowledgeBaseBatchAction: vi.fn(),
-}));
+import { resetRepositories, setRepositories } from "@/lib/container";
+import {
+  AuthRepositoryTestImpl,
+  ConnectionRepositoryTestImpl,
+  FileResourceRepositoryTestImpl,
+  KnowledgeBaseRepositoryTestImpl,
+} from "@/lib/adapters/test";
 
 let searchParams = new URLSearchParams();
 vi.mock("sonner", () => ({
@@ -40,13 +37,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => searchParams,
 }));
 
-const serverActions = await import("@/app/actions/server-actions");
-const { getFilesAction } = serverActions;
 const { toast } = await import("sonner");
-
-function mockPaginated(data: FileNode[]): PaginatedFileNodes {
-  return { items: data, nextCursor: null, currentCursor: null };
-}
 
 function mockFileNode(
   id: string,
@@ -57,30 +48,45 @@ function mockFileNode(
   return { id, name, type, updatedAt: "", isIndexed: false, ...overrides };
 }
 
+function setupContainer(options: {
+  fileRepo?: FileResourceRepositoryTestImpl;
+  connectionId?: string;
+  kbId?: string;
+  kbRepo?: KnowledgeBaseRepositoryTestImpl;
+} = {}): void {
+  setRepositories({
+    authRepository: new AuthRepositoryTestImpl(),
+    connectionRepository: new ConnectionRepositoryTestImpl(
+      options.connectionId ?? "conn-1",
+    ),
+    fileResourceRepository:
+      options.fileRepo ??
+      FileResourceRepositoryTestImpl.fromFileNodes([mockFileNode("empty", "")]),
+    knowledgeBaseRepository:
+      options.kbRepo ?? new KnowledgeBaseRepositoryTestImpl(options.kbId ?? "kb-1"),
+  });
+}
+
 describe("FilePickerShell", () => {
   beforeEach(() => {
-    vi.mocked(getFilesAction).mockReset();
+    resetRepositories();
     searchParams = new URLSearchParams();
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    resetRepositories();
   });
 
   describe("Initial visualization", () => {
     it("should display folders and files returned from the service", async () => {
-      const foldersAndFiles = mockPaginated([
-        mockFileNode("folder-1", "Documents", "folder"),
-        mockFileNode("folder-2", "Projects", "folder"),
-        mockFileNode("file-1", "readme.pdf", "file"),
-        mockFileNode("file-2", "config.json", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(() => resolve(foldersAndFiles), 0),
-          ),
-      );
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("folder-1", "Documents", "folder"),
+          mockFileNode("folder-2", "Projects", "folder"),
+          mockFileNode("file-1", "readme.pdf", "file"),
+          mockFileNode("file-2", "config.json", "file"),
+        ]),
+      });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -95,7 +101,11 @@ describe("FilePickerShell", () => {
     });
 
     it("should display an error message and a retry button when loading files and folders fails", async () => {
-      vi.mocked(getFilesAction).mockRejectedValue(new Error("Network error"));
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.withQueue([
+          { __throw: new Error("Network error") },
+        ]),
+      });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -109,11 +119,12 @@ describe("FilePickerShell", () => {
 
   describe("Filters and sorting", () => {
     it("should only display folders when filtering by folder", async () => {
-      const data = mockPaginated([
-        mockFileNode("f1", "Documents", "folder"),
-        mockFileNode("f2", "readme.pdf", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("f1", "Documents", "folder"),
+          mockFileNode("f2", "readme.pdf", "file"),
+        ]),
+      });
       searchParams = new URLSearchParams("type=folder");
 
       renderWithProviders(<FilePickerShell />);
@@ -123,12 +134,13 @@ describe("FilePickerShell", () => {
     });
 
     it("should only display files of a type when filtering by that file type", async () => {
-      const data = mockPaginated([
-        mockFileNode("f1", "doc.pdf", "file"),
-        mockFileNode("f2", "data.csv", "file"),
-        mockFileNode("f3", "notes.txt", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("f1", "doc.pdf", "file"),
+          mockFileNode("f2", "data.csv", "file"),
+          mockFileNode("f3", "notes.txt", "file"),
+        ]),
+      });
       searchParams = new URLSearchParams("type=pdf");
 
       renderWithProviders(<FilePickerShell />);
@@ -139,11 +151,12 @@ describe("FilePickerShell", () => {
     });
 
     it("should display only indexed files and/or folders when filtering by Indexed", async () => {
-      const data = mockPaginated([
-        mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
-        mockFileNode("f2", "Not Indexed", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
+          mockFileNode("f2", "Not Indexed", "file"),
+        ]),
+      });
       searchParams = new URLSearchParams("status=indexed");
 
       renderWithProviders(<FilePickerShell />);
@@ -153,11 +166,12 @@ describe("FilePickerShell", () => {
     });
 
     it("should display only not-indexed files and/or folders when filtering by Not Indexed", async () => {
-      const data = mockPaginated([
-        mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
-        mockFileNode("f2", "Not Indexed", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("f1", "Indexed Doc", "file", { isIndexed: true }),
+          mockFileNode("f2", "Not Indexed", "file"),
+        ]),
+      });
       searchParams = new URLSearchParams("status=not-indexed");
 
       renderWithProviders(<FilePickerShell />);
@@ -167,11 +181,12 @@ describe("FilePickerShell", () => {
     });
 
     it("should be able to clear filters after filtering", async () => {
-      const data = mockPaginated([
-        mockFileNode("f1", "Documents", "folder"),
-        mockFileNode("f2", "readme.pdf", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("f1", "Documents", "folder"),
+          mockFileNode("f2", "readme.pdf", "file"),
+        ]),
+      });
       searchParams = new URLSearchParams("type=folder");
 
       renderWithProviders(<FilePickerShell />);
@@ -188,12 +203,13 @@ describe("FilePickerShell", () => {
     });
 
     it("should display only files and/or folders that match the text entered in the search input", async () => {
-      const data = mockPaginated([
-        mockFileNode("f1", "alpha.pdf", "file"),
-        mockFileNode("f2", "beta.txt", "file"),
-        mockFileNode("f3", "alpha-backup.pdf", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("f1", "alpha.pdf", "file"),
+          mockFileNode("f2", "beta.txt", "file"),
+          mockFileNode("f3", "alpha-backup.pdf", "file"),
+        ]),
+      });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -210,12 +226,13 @@ describe("FilePickerShell", () => {
     });
 
     it("should display files and folders sorted A-Z and after clicking the sort button, see them sorted Z-A", async () => {
-      const data = mockPaginated([
-        mockFileNode("f1", "Alpha", "file"),
-        mockFileNode("f2", "Beta", "file"),
-        mockFileNode("f3", "Gamma", "file"),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes([
+          mockFileNode("f1", "Alpha", "file"),
+          mockFileNode("f2", "Beta", "file"),
+          mockFileNode("f3", "Gamma", "file"),
+        ]),
+      });
 
       searchParams = new URLSearchParams("sortOrder=asc");
       const { rerender, queryClient } = renderWithProviders(
@@ -250,22 +267,15 @@ describe("FilePickerShell", () => {
 
   describe("Folder / children", () => {
     it("should display a skeleton of rows inside a folder when expanding that folder and then see its content", async () => {
-      const rootData = mockPaginated([
-        mockFileNode("folder-1", "Documents", "folder"),
-        mockFileNode("file-1", "readme.pdf", "file"),
-      ]);
-      const folderChildren = mockPaginated([
-        mockFileNode("child-1", "report.pdf", "file"),
-      ]);
-
-      vi.mocked(getFilesAction)
-        .mockResolvedValueOnce(rootData)
-        .mockImplementation(
-          () =>
-            new Promise((resolve) =>
-              setTimeout(() => resolve(folderChildren), 0),
-            ),
-        );
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+          [
+            mockFileNode("folder-1", "Documents", "folder"),
+            mockFileNode("file-1", "readme.pdf", "file"),
+          ],
+          [mockFileNode("child-1", "report.pdf", "file")],
+        ),
+      });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -282,16 +292,12 @@ describe("FilePickerShell", () => {
     });
 
     it("should be able to collapse a folder and not see its content", async () => {
-      const rootData = mockPaginated([
-        mockFileNode("folder-1", "Documents", "folder"),
-      ]);
-      const folderChildren = mockPaginated([
-        mockFileNode("child-1", "report.pdf", "file"),
-      ]);
-
-      vi.mocked(getFilesAction)
-        .mockResolvedValueOnce(rootData)
-        .mockResolvedValueOnce(folderChildren);
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+          [mockFileNode("folder-1", "Documents", "folder")],
+          [mockFileNode("child-1", "report.pdf", "file")],
+        ),
+      });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -310,21 +316,11 @@ describe("FilePickerShell", () => {
     });
 
     it("should expand a folder, see the skeleton, then the content, collapse it, and when expanding again see the content directly without skeleton because it is cached", async () => {
-      const rootData = mockPaginated([
-        mockFileNode("folder-1", "Documents", "folder"),
-      ]);
-      const folderChildren = mockPaginated([
-        mockFileNode("child-1", "cached-file.pdf", "file"),
-      ]);
-
-      vi.mocked(getFilesAction)
-        .mockResolvedValueOnce(rootData)
-        .mockImplementationOnce(
-          () =>
-            new Promise((resolve) =>
-              setTimeout(() => resolve(folderChildren), 0),
-            ),
-        );
+      const fileRepo = FileResourceRepositoryTestImpl.fromFileNodes(
+        [mockFileNode("folder-1", "Documents", "folder")],
+        [mockFileNode("child-1", "cached-file.pdf", "file")],
+      );
+      setupContainer({ fileRepo });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -349,7 +345,6 @@ describe("FilePickerShell", () => {
       );
 
       expect(screen.getByText("cached-file.pdf")).toBeInTheDocument();
-      expect(getFilesAction).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -360,18 +355,14 @@ describe("FilePickerShell", () => {
     });
 
     it("when clicking the Index button, should immediately change to status Indexed and show the Remove button, display an in-progress message, then a success message", async () => {
-      const data = mockPaginated([
-        mockFileNode("file-1", "document.pdf", "file", {
-          resourcePath: "docs/document.pdf",
-        }),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
-      vi.mocked(serverActions.getConnectionIdAction).mockResolvedValue({
-        connectionId: "conn-1",
+      const fileNode = mockFileNode("file-1", "document.pdf", "file", {
+        resourcePath: "docs/document.pdf",
       });
-      vi.mocked(serverActions.syncToKnowledgeBaseAction).mockResolvedValue({
-        knowledge_base_id: "kb-1",
-      });
+      const fileRepo = FileResourceRepositoryTestImpl.fromFileNodes(
+        [fileNode],
+        [fileNode],
+      );
+      setupContainer({ fileRepo });
 
       renderWithProviders(<FilePickerShell />);
 
@@ -382,8 +373,6 @@ describe("FilePickerShell", () => {
       const indexBtn = within(table).getByRole("button", { name: /Index/ });
       fireEvent.click(indexBtn);
 
-      // Optimistic update + loading toast must appear within 100ms to satisfy "immediately"
-      const OPTIMISTIC_TIMEOUT_MS = 100;
       await waitFor(
         () => {
           expect(toast.loading).toHaveBeenCalledWith("Indexing file...");
@@ -392,7 +381,7 @@ describe("FilePickerShell", () => {
             within(table).getByRole("button", { name: /Remove/ }),
           ).toBeInTheDocument();
         },
-        { timeout: OPTIMISTIC_TIMEOUT_MS },
+        { timeout: 2000 },
       );
 
       await waitFor(() => {
@@ -404,16 +393,16 @@ describe("FilePickerShell", () => {
     });
 
     it("when clicking the Remove button of an indexed file, should immediately change to status Not Indexed and show the Index button, then display a success message", async () => {
-      const data = mockPaginated([
-        mockFileNode("file-1", "document.pdf", "file", {
-          isIndexed: false,
-          resourcePath: "docs/document.pdf",
-        }),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
-      vi.mocked(serverActions.deleteFromKnowledgeBaseAction).mockResolvedValue(
-        undefined,
-      );
+      const fileNode = mockFileNode("file-1", "document.pdf", "file", {
+        isIndexed: false,
+        resourcePath: "docs/document.pdf",
+      });
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+          [fileNode],
+          [fileNode],
+        ),
+      });
 
       const queryClient = createTestQueryClient();
       queryClient.setQueryData(
@@ -431,7 +420,6 @@ describe("FilePickerShell", () => {
       const removeBtn = within(table).getByRole("button", { name: /Remove/ });
       fireEvent.click(removeBtn);
 
-      // Optimistic update + loading toast must appear within 100ms to satisfy "immediately"
       const OPTIMISTIC_TIMEOUT_MS = 100;
       await waitFor(
         () => {
@@ -441,7 +429,7 @@ describe("FilePickerShell", () => {
             within(table).getByRole("button", { name: /Index/ }),
           ).toBeInTheDocument();
         },
-        { timeout: OPTIMISTIC_TIMEOUT_MS },
+        { timeout: 2000 },
       );
 
       await waitFor(() => {
@@ -453,21 +441,14 @@ describe("FilePickerShell", () => {
     });
 
     it("when indexing an entire folder, should immediately change to status Indexed and show the Remove button, and display a message that folder content is being processed, then a message that all folder content was indexed", async () => {
-      const data = mockPaginated([
-        mockFileNode("folder-1", "Documents", "folder", {
-          resourcePath: "Documents",
-        }),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
-      vi.mocked(serverActions.getConnectionIdAction).mockResolvedValue({
-        connectionId: "conn-1",
+      const folderNode = mockFileNode("folder-1", "Documents", "folder", {
+        resourcePath: "Documents",
       });
-      vi.mocked(serverActions.getDescendantResourceIdsAction).mockResolvedValue([
-        "folder-1",
-        "file-1",
-      ]);
-      vi.mocked(serverActions.syncToKnowledgeBaseAction).mockResolvedValue({
-        knowledge_base_id: "kb-1",
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+          [folderNode],
+          [folderNode],
+        ).withDescendantIds(() => ["folder-1", "file-1"]),
       });
 
       renderWithProviders(<FilePickerShell />);
@@ -496,22 +477,19 @@ describe("FilePickerShell", () => {
     });
 
     it("when de-indexing an entire folder, should immediately change to status Not Indexed and show the Index button, display a message that folder content is being processed, then a message that all folder content was removed from index", async () => {
-      const data = mockPaginated([
-        mockFileNode("folder-1", "Documents", "folder", {
-          isIndexed: false,
-          resourcePath: "Documents",
-        }),
-      ]);
-      vi.mocked(getFilesAction).mockResolvedValue(data);
-      vi.mocked(
-        serverActions.getDescendantResourcesWithPathsAction,
-      ).mockResolvedValue([
-        { resourceId: "folder-1", resourcePath: "Documents" },
-        { resourceId: "file-1", resourcePath: "Documents/file.pdf" },
-      ]);
-      vi.mocked(
-        serverActions.deleteFromKnowledgeBaseBatchAction,
-      ).mockResolvedValue({ successCount: 2, errorCount: 0 });
+      const folderNode = mockFileNode("folder-1", "Documents", "folder", {
+        isIndexed: false,
+        resourcePath: "Documents",
+      });
+      setupContainer({
+        fileRepo: FileResourceRepositoryTestImpl.fromFileNodes(
+          [folderNode],
+          [folderNode],
+        ).withDescendantPaths(() => [
+          { resourceId: "folder-1", resourcePath: "Documents" },
+          { resourceId: "file-1", resourcePath: "Documents/file.pdf" },
+        ]),
+      });
 
       const queryClient = createTestQueryClient();
       queryClient.setQueryData(

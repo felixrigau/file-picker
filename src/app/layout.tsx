@@ -1,3 +1,4 @@
+import "@/lib/container.init";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/providers";
 import { SpeedInsights } from "@vercel/speed-insights/next";

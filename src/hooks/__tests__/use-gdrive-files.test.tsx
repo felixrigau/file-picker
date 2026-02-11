@@ -3,31 +3,22 @@ import { createWrapper } from "@/test/test-utils";
 import type { FileNode, PaginatedFileNodes } from "@/types/domain";
 import { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { resetRepositories, setRepositories } from "@/lib/container";
+import {
+  AuthRepositoryTestImpl,
+  ConnectionRepositoryTestImpl,
+  FileResourceRepositoryTestImpl,
+  KnowledgeBaseRepositoryTestImpl,
+} from "@/lib/adapters/test";
 
-vi.mock("@/app/actions/server-actions", () => ({
-  getFilesAction: vi.fn(),
-}));
-
-const { getFilesAction } = await import("@/app/actions/server-actions");
-
-const mockPaginated = (data: FileNode[]): PaginatedFileNodes => ({
-  items: data,
-  nextCursor: null,
-  currentCursor: null,
-});
-
-const mockFileNode = (
+function mockFileNode(
   id: string,
   name: string,
   type: "file" | "folder" = "file",
-): FileNode => ({
-  id,
-  name,
-  type,
-  updatedAt: "",
-  isIndexed: false,
-});
+): FileNode {
+  return { id, name, type, updatedAt: "", isIndexed: false };
+}
 
 describe("useGDriveFiles", () => {
   let queryClient: QueryClient;
@@ -36,19 +27,28 @@ describe("useGDriveFiles", () => {
     queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    vi.mocked(getFilesAction).mockReset();
+    resetRepositories();
+    setRepositories({
+      authRepository: new AuthRepositoryTestImpl(),
+      connectionRepository: new ConnectionRepositoryTestImpl(),
+      fileResourceRepository: new FileResourceRepositoryTestImpl(),
+      knowledgeBaseRepository: new KnowledgeBaseRepositoryTestImpl(),
+    });
   });
 
   afterEach(() => {
     queryClient.clear();
+    resetRepositories();
   });
 
   it("returns data correctly when fetch succeeds", async () => {
-    const mockData = mockPaginated([
+    const items = [
       mockFileNode("id1", "file1.txt"),
       mockFileNode("id2", "folder1", "folder"),
-    ]);
-    vi.mocked(getFilesAction).mockResolvedValue(mockData);
+    ];
+    setRepositories({
+      fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(items),
+    });
 
     const { result } = renderHook(() => useGDriveFiles(), {
       wrapper: createWrapper(queryClient),
@@ -58,17 +58,23 @@ describe("useGDriveFiles", () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data).toEqual(mockData);
     expect(result.current.data?.items).toHaveLength(2);
-    expect(getFilesAction).toHaveBeenCalledWith(undefined);
+    expect(result.current.data?.items?.[0].id).toBe("id1");
+    expect(result.current.data?.items?.[0].name).toBe("file1.txt");
+    expect(result.current.data?.items?.[1].id).toBe("id2");
+    expect(result.current.data?.items?.[1].type).toBe("folder");
+    expect(result.current.data?.nextCursor).toBeNull();
   });
 
   it("calls fetch with folderId when provided and refetches when folderId changes", async () => {
-    const rootData = mockPaginated([mockFileNode("r1", "root.txt")]);
-    const folderData = mockPaginated([mockFileNode("c1", "child.pdf")]);
-    vi.mocked(getFilesAction)
-      .mockResolvedValueOnce(rootData)
-      .mockResolvedValueOnce(folderData);
+    const rootData = [mockFileNode("r1", "root.txt")];
+    const folderData = [mockFileNode("c1", "child.pdf")];
+    setRepositories({
+      fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(
+        rootData,
+        folderData,
+      ),
+    });
 
     const { result, rerender } = renderHook(
       ({ folderId }: { folderId?: string }) => useGDriveFiles(folderId),
@@ -83,13 +89,9 @@ describe("useGDriveFiles", () => {
     });
     expect(result.current.data?.items).toHaveLength(1);
     expect(result.current.data?.items?.[0].id).toBe("r1");
-    expect(getFilesAction).toHaveBeenCalledWith(undefined);
 
     rerender({ folderId: "folder-123" });
 
-    await waitFor(() => {
-      expect(getFilesAction).toHaveBeenCalledWith("folder-123");
-    });
     await waitFor(() => {
       expect(result.current.data?.items).toHaveLength(1);
       expect(result.current.data?.items?.[0].id).toBe("c1");

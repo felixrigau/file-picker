@@ -86,6 +86,8 @@ export async function GET(request: Request) {
 }
 ```
 
+For full details on **initialization**, **dependency injection**, and **test setup**, see [docs/CONTAINER.md](./CONTAINER.md).
+
 ## Test Implementations
 
 For unit tests, use the test implementations from `@/lib/adapters/test`:
@@ -97,14 +99,17 @@ import {
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
 } from "@/lib/adapters/test";
-import { setRepositories, resetRepositories } from "@/lib/container";
+import { resetRepositories, setRepositories } from "@/lib/container";
 
 beforeEach(() => {
+  resetRepositories();
   setRepositories({
     authRepository: new AuthRepositoryTestImpl(),
-    connectionRepository: new ConnectionRepositoryTestImpl(),
-    fileResourceRepository: new FileResourceRepositoryTestImpl(),
-    knowledgeBaseRepository: new KnowledgeBaseRepositoryTestImpl(),
+    connectionRepository: new ConnectionRepositoryTestImpl("conn-1"),
+    fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes([
+      /* your mock FileNode[] */
+    ]),
+    knowledgeBaseRepository: new KnowledgeBaseRepositoryTestImpl("kb-1"),
   });
 });
 

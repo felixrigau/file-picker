@@ -84,6 +84,18 @@ export function resetRepositories(): void {
   HttpClient.resetInstance();
 }
 
+/**
+ * Composition root — explicitly wires all adapters (eager init).
+ * Idempotent. Import this module at app startup so the container is initialized.
+ * @see docs/CONTAINER.md
+ */
+export function bootstrapContainer(): void {
+  getAuthRepository();
+  getConnectionRepository();
+  getFileResourceRepository();
+  getKnowledgeBaseRepository();
+}
+
 export {
   getAuthRepository,
   getConnectionRepository,

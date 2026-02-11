@@ -7,18 +7,31 @@ import {
 import { createWrapper } from "@/test/test-utils";
 import { QueryClient } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { resetRepositories, setRepositories } from "@/lib/container";
+import {
+  AuthRepositoryTestImpl,
+  ConnectionRepositoryTestImpl,
+  FileResourceRepositoryTestImpl,
+  KnowledgeBaseRepositoryTestImpl,
+} from "@/lib/adapters/test";
 
-vi.mock("@/app/actions/server-actions", () => ({
-  getConnectionIdAction: vi.fn(),
-  getDescendantResourceIdsAction: vi.fn(),
-  getDescendantResourcesWithPathsAction: vi.fn(),
-  syncToKnowledgeBaseAction: vi.fn(),
-  deleteFromKnowledgeBaseAction: vi.fn(),
-  deleteFromKnowledgeBaseBatchAction: vi.fn(),
-}));
-
-const actions = await import("@/app/actions/server-actions");
+function setupContainer(options: {
+  kbRepo?: KnowledgeBaseRepositoryTestImpl;
+  fileRepo?: FileResourceRepositoryTestImpl;
+  connectionId?: string;
+} = {}): void {
+  setRepositories({
+    authRepository: new AuthRepositoryTestImpl(),
+    connectionRepository: new ConnectionRepositoryTestImpl(
+      options.connectionId ?? "conn-1",
+    ),
+    fileResourceRepository:
+      options.fileRepo ?? new FileResourceRepositoryTestImpl(),
+    knowledgeBaseRepository:
+      options.kbRepo ?? new KnowledgeBaseRepositoryTestImpl("kb-1"),
+  });
+}
 
 describe("useKBActions", () => {
   let queryClient: QueryClient;
@@ -30,38 +43,18 @@ describe("useKBActions", () => {
         mutations: { retry: false },
       },
     });
-    vi.mocked(actions.getConnectionIdAction).mockResolvedValue({
-      connectionId: "conn-1",
-    });
-    vi.mocked(actions.syncToKnowledgeBaseAction).mockResolvedValue({
-      knowledge_base_id: "kb-1",
-    });
-    vi.mocked(actions.deleteFromKnowledgeBaseAction).mockResolvedValue(
-      undefined,
-    );
-    vi.mocked(actions.getDescendantResourceIdsAction).mockImplementation(
-      (id) => Promise.resolve([id]),
-    );
-    vi.mocked(actions.getDescendantResourcesWithPathsAction).mockImplementation(
-      (id, path) =>
-        Promise.resolve([{ resourceId: id, resourcePath: path }]),
-    );
-    vi.mocked(actions.deleteFromKnowledgeBaseBatchAction).mockResolvedValue({
-      successCount: 1,
-      errorCount: 0,
-    });
+    resetRepositories();
+    setupContainer();
   });
 
   afterEach(() => {
     queryClient.clear();
+    resetRepositories();
   });
 
   it("indexResource updates indexedIds cache optimistically before API resolves", async () => {
-    let resolveSync: (value: { knowledge_base_id: string }) => void;
-    const syncPromise = new Promise<{ knowledge_base_id: string }>((r) => {
-      resolveSync = r;
-    });
-    vi.mocked(actions.syncToKnowledgeBaseAction).mockReturnValue(syncPromise);
+    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingSync("kb-1");
+    setupContainer({ kbRepo });
 
     const { result } = renderHook(() => useKBActions(), {
       wrapper: createWrapper(queryClient),
@@ -84,7 +77,7 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      resolveSync!({ knowledge_base_id: "kb-1" });
+      kbRepo.resolveSync({ knowledge_base_id: "kb-1" });
     });
     await waitFor(() => {
       expect(result.current.indexResource.isSuccess).toBe(true);
@@ -92,11 +85,8 @@ describe("useKBActions", () => {
   });
 
   it("indexResource rolls back indexedIds on API error", async () => {
-    let rejectSync: (err: Error) => void;
-    const syncPromise = new Promise<{ knowledge_base_id: string }>((_, rej) => {
-      rejectSync = rej;
-    });
-    vi.mocked(actions.syncToKnowledgeBaseAction).mockReturnValue(syncPromise);
+    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingSync("kb-1");
+    setupContainer({ kbRepo });
 
     const { result } = renderHook(() => useKBActions(), {
       wrapper: createWrapper(queryClient),
@@ -118,7 +108,7 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      rejectSync!(new Error("API error"));
+      kbRepo.rejectSync(new Error("API error"));
     });
 
     await waitFor(() => {
@@ -151,16 +141,11 @@ describe("useKBActions", () => {
   });
 
   it("deIndexResource updates indexedIds cache optimistically before API resolves", async () => {
+    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingDelete("kb-1");
+    setupContainer({ kbRepo });
+
     const indexedKey = queryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["res-1", "res-2"]);
-
-    let resolveDelete: () => void;
-    const deletePromise = new Promise<void>((r) => {
-      resolveDelete = r;
-    });
-    vi.mocked(actions.deleteFromKnowledgeBaseAction).mockReturnValue(
-      deletePromise,
-    );
 
     const { result } = renderHook(() => useKBActions(), {
       wrapper: createWrapper(queryClient),
@@ -180,7 +165,7 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      resolveDelete!();
+      kbRepo.resolveDelete();
     });
     await waitFor(() => {
       expect(result.current.deIndexResource.isSuccess).toBe(true);
@@ -188,16 +173,11 @@ describe("useKBActions", () => {
   });
 
   it("deIndexResource rolls back indexedIds on API error", async () => {
+    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingDelete("kb-1");
+    setupContainer({ kbRepo });
+
     const indexedKey = queryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["res-1", "res-2"]);
-
-    let rejectDelete: (err: Error) => void;
-    const deletePromise = new Promise<void>((_, rej) => {
-      rejectDelete = rej;
-    });
-    vi.mocked(actions.deleteFromKnowledgeBaseAction).mockReturnValue(
-      deletePromise,
-    );
 
     const { result } = renderHook(() => useKBActions(), {
       wrapper: createWrapper(queryClient),
@@ -217,7 +197,7 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      rejectDelete!(new Error("De-index failed"));
+      kbRepo.rejectDelete(new Error("De-index failed"));
     });
 
     await waitFor(() => {
