@@ -32,6 +32,12 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0"
   },
+  "browserslist": [
+    "chrome 111",
+    "edge 111",
+    "firefox 111",
+    "safari 16.4"
+  ],
   "devDependencies": {
     "@lhci/cli": "^0.15.0",
     "@tailwindcss/postcss": "^4",
