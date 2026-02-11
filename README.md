@@ -38,6 +38,15 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
+## Git hooks (Husky)
+
+**Pre-commit** — runs lint and type-check; blocks commits if either fails.  
+**Pre-push** — runs `npm run check` (lint + type-check + tests); blocks push until all pass.
+
+Ensures code meets lint, types, and tests before it reaches the remote.
+
+---
+
 ## Performance decisions
 
 - **Lazy components** — `LazyFilePicker`, `LazySpeedInsights`, `LazyToaster` load via `next/dynamic` (`ssr: false`) to reduce initial bundle and improve LCP.
