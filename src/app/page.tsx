@@ -1,4 +1,4 @@
-import { FilePickerGDriveContainer } from "@/components/file-picker";
+import { FilePickerGoogleDriveContainer } from "@/components/file-picker";
 import { Suspense } from "react";
 
 function FilePickerFallback() {
@@ -13,7 +13,7 @@ export default function Home() {
       <main className="w-full max-w-4xl">
         <h1 className="mb-6 text-2xl font-semibold">File Picker</h1>
         <Suspense fallback={<FilePickerFallback />}>
-          <FilePickerGDriveContainer />
+          <FilePickerGoogleDriveContainer />
         </Suspense>
       </main>
     </div>

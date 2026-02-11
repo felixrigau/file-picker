@@ -1,3 +1,3 @@
 export { FilePicker } from "./FilePicker";
-export { FilePickerGDriveContainer } from "./FilePickerGDriveContainer";
+export { FilePickerGoogleDriveContainer } from "./FilePickerGoogleDriveContainer";
 export type { FilePickerProps } from "./FilePicker.types";

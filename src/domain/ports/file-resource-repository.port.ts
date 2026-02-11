@@ -1,7 +1,7 @@
 import type { PaginatedFileNodes } from "@/domain/types";
 
 /**
- * Port: File resource — GDrive files/folders listing and traversal.
+ * Port: File resource — Google Drive files/folders listing and traversal.
  * Implementations return domain types; mapping happens inside the repository.
  */
 export interface FileResourceRepository {

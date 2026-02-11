@@ -1,4 +1,4 @@
-import { useGDriveFiles } from "@/hooks/use-gdrive-files";
+import { useGoogleDriveFiles } from "@/hooks/use-google-drive-files";
 import { createWrapper } from "@/test/test-utils";
 import type { FileNode } from "@/domain/types";
 import { QueryClient } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ function mockFileNode(
   return { id, name, type, updatedAt: "", isIndexed: false };
 }
 
-describe("useGDriveFiles", () => {
+describe("useGoogleDriveFiles", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -50,7 +50,7 @@ describe("useGDriveFiles", () => {
       fileResourceRepository: FileResourceRepositoryTestImpl.fromFileNodes(items),
     });
 
-    const { result } = renderHook(() => useGDriveFiles(), {
+    const { result } = renderHook(() => useGoogleDriveFiles(), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -77,7 +77,7 @@ describe("useGDriveFiles", () => {
     });
 
     const { result, rerender } = renderHook(
-      ({ folderId }: { folderId?: string }) => useGDriveFiles(folderId),
+      ({ folderId }: { folderId?: string }) => useGoogleDriveFiles(folderId),
       {
         wrapper: createWrapper(queryClient),
         initialProps: { folderId: undefined } as { folderId?: string },

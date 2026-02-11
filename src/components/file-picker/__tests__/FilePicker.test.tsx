@@ -1,4 +1,4 @@
-import { FilePickerGDriveContainer } from "../FilePickerGDriveContainer";
+import { FilePickerGoogleDriveContainer } from "../FilePickerGoogleDriveContainer";
 import { createTestQueryClient, renderWithProviders } from "@/test/test-utils";
 import { queryKeys } from "@/hooks/query-keys";
 import type { FileNode } from "@/domain/types";
@@ -51,8 +51,8 @@ function mockFileNode(
 function setupDIContainer(options: {
   fileResourceRepository?: FileResourceRepositoryTestImpl;
   connectionId?: string;
-  kbId?: string;
-  kbRepo?: KnowledgeBaseRepositoryTestImpl;
+  knowledgeBaseId?: string;
+  knowledgeBaseRepo?: KnowledgeBaseRepositoryTestImpl;
 } = {}): void {
   setRepositories({
     authRepository: new AuthRepositoryTestImpl(),
@@ -63,11 +63,14 @@ function setupDIContainer(options: {
       options.fileResourceRepository ??
       FileResourceRepositoryTestImpl.fromFileNodes([mockFileNode("empty", "")]),
     knowledgeBaseRepository:
-      options.kbRepo ?? new KnowledgeBaseRepositoryTestImpl(options.kbId ?? "kb-1"),
+      options.knowledgeBaseRepo ??
+      new KnowledgeBaseRepositoryTestImpl(
+        options.knowledgeBaseId ?? "knowledge-base-1",
+      ),
   });
 }
 
-describe("FilePickerGDriveContainer", () => {
+describe("FilePickerGoogleDriveContainer", () => {
   beforeEach(() => {
     resetRepositories();
     searchParams = new URLSearchParams();
@@ -88,7 +91,7 @@ describe("FilePickerGDriveContainer", () => {
         ]),
       });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(screen.queryByText("Documents")).not.toBeInTheDocument();
       const skeletonRows = screen.getAllByRole("row");
@@ -107,7 +110,7 @@ describe("FilePickerGDriveContainer", () => {
         ]),
       });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(
         await screen.findByText("Error loading files"),
@@ -127,7 +130,7 @@ describe("FilePickerGDriveContainer", () => {
       });
       searchParams = new URLSearchParams("type=folder");
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Documents")).toBeInTheDocument();
       expect(screen.queryByText("readme.pdf")).not.toBeInTheDocument();
@@ -143,7 +146,7 @@ describe("FilePickerGDriveContainer", () => {
       });
       searchParams = new URLSearchParams("type=pdf");
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("doc.pdf")).toBeInTheDocument();
       expect(screen.queryByText("data.csv")).not.toBeInTheDocument();
@@ -159,7 +162,7 @@ describe("FilePickerGDriveContainer", () => {
       });
       searchParams = new URLSearchParams("status=indexed");
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Indexed Doc")).toBeInTheDocument();
       expect(screen.queryByText("Not Indexed")).not.toBeInTheDocument();
@@ -174,7 +177,7 @@ describe("FilePickerGDriveContainer", () => {
       });
       searchParams = new URLSearchParams("status=not-indexed");
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Not Indexed")).toBeInTheDocument();
       expect(screen.queryByText("Indexed Doc")).not.toBeInTheDocument();
@@ -189,7 +192,7 @@ describe("FilePickerGDriveContainer", () => {
       });
       searchParams = new URLSearchParams("type=folder");
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Documents")).toBeInTheDocument();
       expect(screen.queryByText("readme.pdf")).not.toBeInTheDocument();
@@ -211,7 +214,7 @@ describe("FilePickerGDriveContainer", () => {
         ]),
       });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("alpha.pdf")).toBeInTheDocument();
       expect(screen.getByText("alpha-backup.pdf")).toBeInTheDocument();
@@ -236,7 +239,7 @@ describe("FilePickerGDriveContainer", () => {
 
       searchParams = new URLSearchParams("sortOrder=asc");
       const { rerender, queryClient } = renderWithProviders(
-        <FilePickerGDriveContainer />,
+        <FilePickerGoogleDriveContainer />,
       );
 
       expect(await screen.findByText("Alpha")).toBeInTheDocument();
@@ -253,7 +256,7 @@ describe("FilePickerGDriveContainer", () => {
       );
       rerender(
         <QueryClientProvider client={queryClient}>
-          <FilePickerGDriveContainer />
+          <FilePickerGoogleDriveContainer />
         </QueryClientProvider>,
       );
 
@@ -277,7 +280,7 @@ describe("FilePickerGDriveContainer", () => {
         ),
       });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Documents")).toBeInTheDocument();
 
@@ -299,7 +302,7 @@ describe("FilePickerGDriveContainer", () => {
         ),
       });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Documents")).toBeInTheDocument();
 
@@ -322,7 +325,7 @@ describe("FilePickerGDriveContainer", () => {
       );
       setupDIContainer({ fileResourceRepository });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Documents")).toBeInTheDocument();
 
@@ -364,7 +367,7 @@ describe("FilePickerGDriveContainer", () => {
       );
       setupDIContainer({ fileResourceRepository });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("document.pdf")).toBeInTheDocument();
       expect(screen.getByText("Not indexed")).toBeInTheDocument();
@@ -407,11 +410,11 @@ describe("FilePickerGDriveContainer", () => {
       const queryClient = createTestQueryClient();
       queryClient.setQueryData(
         queryKeys.activeKnowledgeBaseId(),
-        "kb-1",
+        "knowledge-base-1",
       );
       queryClient.setQueryData(queryKeys.indexedIds(), ["file-1"]);
 
-      renderWithProviders(<FilePickerGDriveContainer />, { queryClient });
+      renderWithProviders(<FilePickerGoogleDriveContainer />, { queryClient });
 
       expect(await screen.findByText("document.pdf")).toBeInTheDocument();
       expect(screen.getByText("Indexed")).toBeInTheDocument();
@@ -450,7 +453,7 @@ describe("FilePickerGDriveContainer", () => {
         ).withDescendantIds(() => ["folder-1", "file-1"]),
       });
 
-      renderWithProviders(<FilePickerGDriveContainer />);
+      renderWithProviders(<FilePickerGoogleDriveContainer />);
 
       expect(await screen.findByText("Documents")).toBeInTheDocument();
 
@@ -493,14 +496,14 @@ describe("FilePickerGDriveContainer", () => {
       const queryClient = createTestQueryClient();
       queryClient.setQueryData(
         queryKeys.activeKnowledgeBaseId(),
-        "kb-1",
+        "knowledge-base-1",
       );
       queryClient.setQueryData(queryKeys.indexedIds(), [
         "folder-1",
         "file-1",
       ]);
 
-      renderWithProviders(<FilePickerGDriveContainer />, { queryClient });
+      renderWithProviders(<FilePickerGoogleDriveContainer />, { queryClient });
 
       expect(await screen.findByText("Documents")).toBeInTheDocument();
       expect(screen.getByText("Indexed")).toBeInTheDocument();

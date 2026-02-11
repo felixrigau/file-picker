@@ -3,7 +3,7 @@
 import type { FileNode, PaginatedFileNodes } from "@/domain/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getGDriveQueryOptions } from "./use-gdrive-files";
+import { getGoogleDriveQueryOptions } from "./use-google-drive-files";
 import { queryKeys } from "./query-keys";
 
 const PREFETCH_DELAY_MS = 150;
@@ -13,7 +13,7 @@ const PREFETCH_CANCEL_DEBOUNCE_MS = 80;
  * Fetches and caches children for expanded folders. TanStack Query layer only.
  * Returns childData Map, prefetch and cancel for hover behavior.
  */
-export function useGDriveFolderChildren(expandedIds: Set<string>): {
+export function useGoogleDriveFolderChildren(expandedIds: Set<string>): {
   childData: Map<string, FileNode[]>;
   prefetch: (folderId: string) => void;
   cancelPrefetch: (folderId: string) => void;
@@ -40,7 +40,7 @@ export function useGDriveFolderChildren(expandedIds: Set<string>): {
 
     for (const id of toFetch) {
       const cached = queryClient.getQueryData<PaginatedFileNodes>(
-        queryKeys.gdrive(id),
+        queryKeys.googleDrive(id),
       );
       if (cached?.items) {
         cachedResults.push({ id, data: cached.items });
@@ -67,7 +67,7 @@ export function useGDriveFolderChildren(expandedIds: Set<string>): {
     Promise.allSettled(
       idsToFetch.map((id) =>
         queryClient
-          .fetchQuery(getGDriveQueryOptions(id))
+          .fetchQuery(getGoogleDriveQueryOptions(id))
           .then((r) => ({ id, data: r.items })),
       ),
     ).then((settledResults) => {
@@ -105,7 +105,7 @@ export function useGDriveFolderChildren(expandedIds: Set<string>): {
       prefetchTimerRef.current = setTimeout(() => {
         prefetchTimerRef.current = null;
         if (hoveredFolderIdRef.current !== folderId) return;
-        queryClient.prefetchQuery(getGDriveQueryOptions(folderId));
+        queryClient.prefetchQuery(getGoogleDriveQueryOptions(folderId));
       }, PREFETCH_DELAY_MS);
     },
     [queryClient],
@@ -123,7 +123,7 @@ export function useGDriveFolderChildren(expandedIds: Set<string>): {
       cancelTimerRef.current = setTimeout(() => {
         cancelTimerRef.current = null;
         if (expandedIdsRef.current.has(folderId)) return;
-        queryClient.cancelQueries({ queryKey: queryKeys.gdrive(folderId) });
+        queryClient.cancelQueries({ queryKey: queryKeys.googleDrive(folderId) });
       }, PREFETCH_CANCEL_DEBOUNCE_MS);
     },
     [queryClient],

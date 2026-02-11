@@ -1,8 +1,8 @@
-export { useGDriveFiles } from "./use-gdrive-files";
-export { useGDriveFolderChildren } from "./use-gdrive-folder-children";
+export { useGoogleDriveFiles } from "./use-google-drive-files";
+export { useGoogleDriveFolderChildren } from "./use-google-drive-folder-children";
 export {
   useActiveKnowledgeBaseId,
   useIndexedResourceIds,
-  useKBActions,
-} from "./use-kb-actions";
+  useKnowledgeBaseActions,
+} from "./use-knowledge-base-actions";
 export { queryKeys } from "./query-keys";

@@ -1,17 +1,17 @@
 "use client";
 
-import { useGDriveFiles, useIndexedResourceIds } from "@/hooks";
+import { useGoogleDriveFiles, useIndexedResourceIds } from "@/hooks";
 import { useState } from "react";
 import { useFileActions } from "./hooks";
 import { FilePicker } from "./FilePicker";
 
-export function FilePickerGDriveContainer() {
+export function FilePickerGoogleDriveContainer() {
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(
     undefined,
   );
 
   const { data, isLoading, isError, error, refetch } =
-    useGDriveFiles(currentFolderId);
+    useGoogleDriveFiles(currentFolderId);
   const indexedIdsRaw = useIndexedResourceIds();
 
   const indexing = useFileActions({

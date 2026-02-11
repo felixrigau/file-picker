@@ -2,8 +2,8 @@ import { queryKeys } from "@/hooks/query-keys";
 import {
   useActiveKnowledgeBaseId,
   useIndexedResourceIds,
-  useKBActions,
-} from "@/hooks/use-kb-actions";
+  useKnowledgeBaseActions,
+} from "@/hooks/use-knowledge-base-actions";
 import { createWrapper } from "@/test/test-utils";
 import { QueryClient } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
@@ -17,7 +17,7 @@ import {
 } from "@/infra/adapters/test";
 
 function setupDIContainer(options: {
-  kbRepo?: KnowledgeBaseRepositoryTestImpl;
+  knowledgeBaseRepo?: KnowledgeBaseRepositoryTestImpl;
   fileResourceRepository?: FileResourceRepositoryTestImpl;
   connectionId?: string;
 } = {}): void {
@@ -29,11 +29,12 @@ function setupDIContainer(options: {
     fileResourceRepository:
       options.fileResourceRepository ?? new FileResourceRepositoryTestImpl(),
     knowledgeBaseRepository:
-      options.kbRepo ?? new KnowledgeBaseRepositoryTestImpl("kb-1"),
+      options.knowledgeBaseRepo ??
+      new KnowledgeBaseRepositoryTestImpl("knowledge-base-1"),
   });
 }
 
-describe("useKBActions", () => {
+describe("useKnowledgeBaseActions", () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -53,10 +54,11 @@ describe("useKBActions", () => {
   });
 
   it("indexResource updates indexedIds cache optimistically before API resolves", async () => {
-    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingSync("kb-1");
-    setupDIContainer({ kbRepo });
+    const knowledgeBaseRepo =
+      KnowledgeBaseRepositoryTestImpl.withPendingSync("knowledge-base-1");
+    setupDIContainer({ knowledgeBaseRepo });
 
-    const { result } = renderHook(() => useKBActions(), {
+    const { result } = renderHook(() => useKnowledgeBaseActions(), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -77,7 +79,9 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      kbRepo.resolveSync({ knowledge_base_id: "kb-1" });
+      knowledgeBaseRepo.resolveSync({
+        knowledge_base_id: "knowledge-base-1",
+      });
     });
     await waitFor(() => {
       expect(result.current.indexResource.isSuccess).toBe(true);
@@ -85,10 +89,11 @@ describe("useKBActions", () => {
   });
 
   it("indexResource rolls back indexedIds on API error", async () => {
-    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingSync("kb-1");
-    setupDIContainer({ kbRepo });
+    const knowledgeBaseRepo =
+      KnowledgeBaseRepositoryTestImpl.withPendingSync("knowledge-base-1");
+    setupDIContainer({ knowledgeBaseRepo });
 
-    const { result } = renderHook(() => useKBActions(), {
+    const { result } = renderHook(() => useKnowledgeBaseActions(), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -108,7 +113,7 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      kbRepo.rejectSync(new Error("API error"));
+      knowledgeBaseRepo.rejectSync(new Error("API error"));
     });
 
     await waitFor(() => {
@@ -121,7 +126,7 @@ describe("useKBActions", () => {
   });
 
   it("indexResource stores activeKnowledgeBaseId on success", async () => {
-    const { result } = renderHook(() => useKBActions(), {
+    const { result } = renderHook(() => useKnowledgeBaseActions(), {
       wrapper: createWrapper(queryClient),
     });
 
@@ -136,24 +141,27 @@ describe("useKBActions", () => {
       expect(result.current.indexResource.isSuccess).toBe(true);
     });
 
-    const kbKey = queryKeys.activeKnowledgeBaseId();
-    expect(queryClient.getQueryData<string>(kbKey)).toBe("kb-1");
+    const knowledgeBaseKey = queryKeys.activeKnowledgeBaseId();
+    expect(queryClient.getQueryData<string>(knowledgeBaseKey)).toBe(
+      "knowledge-base-1",
+    );
   });
 
   it("deIndexResource updates indexedIds cache optimistically before API resolves", async () => {
-    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingDelete("kb-1");
-    setupDIContainer({ kbRepo });
+    const knowledgeBaseRepo =
+      KnowledgeBaseRepositoryTestImpl.withPendingDelete("knowledge-base-1");
+    setupDIContainer({ knowledgeBaseRepo });
 
     const indexedKey = queryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["res-1", "res-2"]);
 
-    const { result } = renderHook(() => useKBActions(), {
+    const { result } = renderHook(() => useKnowledgeBaseActions(), {
       wrapper: createWrapper(queryClient),
     });
 
     act(() => {
       result.current.deIndexResource.mutate({
-        knowledgeBaseId: "kb-1",
+        knowledgeBaseId: "knowledge-base-1",
         resourcePath: "folder/file.pdf",
         resourceId: "res-1",
       });
@@ -165,7 +173,7 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      kbRepo.resolveDelete();
+      knowledgeBaseRepo.resolveDelete();
     });
     await waitFor(() => {
       expect(result.current.deIndexResource.isSuccess).toBe(true);
@@ -173,19 +181,20 @@ describe("useKBActions", () => {
   });
 
   it("deIndexResource rolls back indexedIds on API error", async () => {
-    const kbRepo = KnowledgeBaseRepositoryTestImpl.withPendingDelete("kb-1");
-    setupDIContainer({ kbRepo });
+    const knowledgeBaseRepo =
+      KnowledgeBaseRepositoryTestImpl.withPendingDelete("knowledge-base-1");
+    setupDIContainer({ knowledgeBaseRepo });
 
     const indexedKey = queryKeys.indexedIds();
     queryClient.setQueryData(indexedKey, ["res-1", "res-2"]);
 
-    const { result } = renderHook(() => useKBActions(), {
+    const { result } = renderHook(() => useKnowledgeBaseActions(), {
       wrapper: createWrapper(queryClient),
     });
 
     act(() => {
       result.current.deIndexResource.mutate({
-        knowledgeBaseId: "kb-1",
+        knowledgeBaseId: "knowledge-base-1",
         resourcePath: "folder/file.pdf",
         resourceId: "res-1",
       });
@@ -197,7 +206,7 @@ describe("useKBActions", () => {
     });
 
     act(() => {
-      kbRepo.rejectDelete(new Error("De-index failed"));
+      knowledgeBaseRepo.rejectDelete(new Error("De-index failed"));
     });
 
     await waitFor(() => {
@@ -245,7 +254,7 @@ describe("useActiveKnowledgeBaseId", () => {
     queryClient.clear();
   });
 
-  it("returns null when no active KB in cache", () => {
+  it("returns null when no active knowledge base in cache", () => {
     const { result } = renderHook(() => useActiveKnowledgeBaseId(), {
       wrapper: createWrapper(queryClient),
     });
@@ -253,12 +262,12 @@ describe("useActiveKnowledgeBaseId", () => {
   });
 
   it("returns cached knowledge base id when set", () => {
-    const kbKey = queryKeys.activeKnowledgeBaseId();
-    queryClient.setQueryData(kbKey, "kb-123");
+    const knowledgeBaseKey = queryKeys.activeKnowledgeBaseId();
+    queryClient.setQueryData(knowledgeBaseKey, "knowledge-base-123");
 
     const { result } = renderHook(() => useActiveKnowledgeBaseId(), {
       wrapper: createWrapper(queryClient),
     });
-    expect(result.current).toBe("kb-123");
+    expect(result.current).toBe("knowledge-base-123");
   });
 });

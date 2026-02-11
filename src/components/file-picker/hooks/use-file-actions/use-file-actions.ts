@@ -6,7 +6,7 @@ import {
   validateDeIndexResourceUseCase,
   validateIndexResourceUseCase,
 } from "@/domain/use-cases";
-import { useActiveKnowledgeBaseId, useKBActions } from "@/hooks";
+import { useActiveKnowledgeBaseId, useKnowledgeBaseActions } from "@/hooks";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { UseFileActionsParams, UseFileActionsResult } from ".";
@@ -23,7 +23,7 @@ export function useFileActions({
     deIndexResource,
     deIndexFolder,
     deIndexNode,
-  } = useKBActions();
+  } = useKnowledgeBaseActions();
 
   const isMissingEnv = isError && isMissingEnvErrorUseCase(error);
 

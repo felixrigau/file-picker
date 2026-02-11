@@ -18,7 +18,7 @@ import { queryKeys } from "./query-keys";
 /** Query key for client-side indexed resource ids (optimistic + persisted). */
 const INDEXED_IDS_KEY = queryKeys.indexedIds();
 
-const ACTIVE_KB_KEY = queryKeys.activeKnowledgeBaseId();
+const ACTIVE_KNOWLEDGE_BASE_KEY = queryKeys.activeKnowledgeBaseId();
 
 /**
  * Returns the set of resource_ids currently considered indexed (for isIndexed UI).
@@ -41,7 +41,7 @@ export function useIndexedResourceIds(): string[] {
  */
 export function useActiveKnowledgeBaseId(): string | null {
   const { data } = useQuery({
-    queryKey: ACTIVE_KB_KEY,
+    queryKey: ACTIVE_KNOWLEDGE_BASE_KEY,
     queryFn: () => null,
     initialData: null,
     staleTime: Number.POSITIVE_INFINITY,
@@ -55,7 +55,7 @@ export function useActiveKnowledgeBaseId(): string | null {
  * so isIndexed changes in the UI before the API responds.
  * All toast feedback is managed in Hook callbacks.
  */
-export function useKBActions() {
+export function useKnowledgeBaseActions() {
   const queryClient = useQueryClient();
 
   type IndexVariables = {
@@ -107,7 +107,7 @@ export function useKBActions() {
       toast.error(msg, { id: context?.toastId });
     },
     onSuccess: (result, variables, context) => {
-      queryClient.setQueryData(ACTIVE_KB_KEY, result.knowledge_base_id);
+      queryClient.setQueryData(ACTIVE_KNOWLEDGE_BASE_KEY, result.knowledge_base_id);
       if (context?.toastId != null) {
         const msg = context.isFolder
           ? `All content in '${context.folderName}' has been indexed.`
@@ -117,7 +117,7 @@ export function useKBActions() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "gdrive",
+        predicate: (query) => query.queryKey[0] === "googleDrive",
       });
     },
   });
@@ -147,7 +147,7 @@ export function useKBActions() {
       toast.error("Error indexing selection", { id: context?.toastId });
     },
     onSuccess: (result, _vars, context) => {
-      queryClient.setQueryData(ACTIVE_KB_KEY, result.knowledge_base_id);
+      queryClient.setQueryData(ACTIVE_KNOWLEDGE_BASE_KEY, result.knowledge_base_id);
       if (context?.toastId != null) {
         toast.success("Selection indexed successfully", {
           id: context.toastId,
@@ -156,7 +156,7 @@ export function useKBActions() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "gdrive",
+        predicate: (query) => query.queryKey[0] === "googleDrive",
       });
     },
   });
@@ -208,7 +208,7 @@ export function useKBActions() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "gdrive",
+        predicate: (query) => query.queryKey[0] === "googleDrive",
       });
     },
   });
@@ -261,7 +261,7 @@ export function useKBActions() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "gdrive",
+        predicate: (query) => query.queryKey[0] === "googleDrive",
       });
     },
   });

@@ -29,18 +29,22 @@ export class KnowledgeBaseRepositoryTestImpl implements KnowledgeBaseRepository 
   }> = [];
 
   constructor(
-    private readonly knowledgeBaseId = "test-kb-id",
+    private readonly knowledgeBaseId = "test-knowledge-base-id",
     private syncMode: "immediate" | "pending" = "immediate",
     private deleteMode: "immediate" | "pending" = "immediate",
   ) {}
 
   /** Use pending sync: returns a promise that the test resolves via resolveSync/rejectSync. */
-  static withPendingSync(knowledgeBaseId = "kb-1"): KnowledgeBaseRepositoryTestImpl {
+  static withPendingSync(
+    knowledgeBaseId = "knowledge-base-1",
+  ): KnowledgeBaseRepositoryTestImpl {
     return new KnowledgeBaseRepositoryTestImpl(knowledgeBaseId, "pending", "immediate");
   }
 
   /** Use pending delete: returns a promise that the test resolves via resolveDelete/rejectDelete. */
-  static withPendingDelete(knowledgeBaseId = "kb-1"): KnowledgeBaseRepositoryTestImpl {
+  static withPendingDelete(
+    knowledgeBaseId = "knowledge-base-1",
+  ): KnowledgeBaseRepositoryTestImpl {
     return new KnowledgeBaseRepositoryTestImpl(knowledgeBaseId, "immediate", "pending");
   }
 

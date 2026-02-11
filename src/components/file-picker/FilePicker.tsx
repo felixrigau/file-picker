@@ -12,9 +12,9 @@ import { FileTable } from "@/components/file-table";
 import { FilterBar } from "@/components/filter-bar";
 import { useMemo } from "react";
 import { useFileFilters, createUseFileTree } from "./hooks";
-import { useGDriveFolderChildren } from "@/hooks";
+import { useGoogleDriveFolderChildren } from "@/hooks";
 
-const useFileTree = createUseFileTree(useGDriveFolderChildren);
+const useFileTree = createUseFileTree(useGoogleDriveFolderChildren);
 
 /**
  * FilePicker — UI logic (filters, tree) is internal. Receives data + actions from container.
