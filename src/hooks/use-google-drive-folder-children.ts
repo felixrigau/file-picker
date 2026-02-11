@@ -1,10 +1,10 @@
 "use client";
 
 import type { FileNode, PaginatedFileNodes } from "@/domain/types";
+import { queryKeys } from "@/hooks/utils/query-keys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getGoogleDriveQueryOptions } from "./use-google-drive-files";
-import { queryKeys } from "./query-keys";
 
 const PREFETCH_DELAY_MS = 150;
 const PREFETCH_CANCEL_DEBOUNCE_MS = 80;
@@ -123,7 +123,9 @@ export function useGoogleDriveFolderChildren(expandedIds: Set<string>): {
       cancelTimerRef.current = setTimeout(() => {
         cancelTimerRef.current = null;
         if (expandedIdsRef.current.has(folderId)) return;
-        queryClient.cancelQueries({ queryKey: queryKeys.googleDrive(folderId) });
+        queryClient.cancelQueries({
+          queryKey: queryKeys.googleDrive(folderId),
+        });
       }, PREFETCH_CANCEL_DEBOUNCE_MS);
     },
     [queryClient],

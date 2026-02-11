@@ -1,22 +1,20 @@
-import { FilePickerGoogleDriveContainer } from "../FilePickerGoogleDriveContainer";
-import { createTestQueryClient, renderWithProviders } from "@/test/test-utils";
-import { queryKeys } from "@/hooks/query-keys";
 import type { FileNode } from "@/domain/types";
-import { QueryClientProvider } from "@tanstack/react-query";
-import {
-  fireEvent,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resetRepositories, setRepositories } from "@/infra/modules/di-container";
+import { queryKeys } from "@/hooks/utils/query-keys";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
 } from "@/infra/adapters/test";
+import {
+  resetRepositories,
+  setRepositories,
+} from "@/infra/modules/di-container";
+import { createTestQueryClient, renderWithProviders } from "@/test/test-utils";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { FilePickerGoogleDriveContainer } from "../FilePickerGoogleDriveContainer";
 
 let searchParams = new URLSearchParams();
 vi.mock("sonner", () => ({
@@ -48,12 +46,14 @@ function mockFileNode(
   return { id, name, type, updatedAt: "", isIndexed: false, ...overrides };
 }
 
-function setupDIContainer(options: {
-  fileResourceRepository?: FileResourceRepositoryTestImpl;
-  connectionId?: string;
-  knowledgeBaseId?: string;
-  knowledgeBaseRepo?: KnowledgeBaseRepositoryTestImpl;
-} = {}): void {
+function setupDIContainer(
+  options: {
+    fileResourceRepository?: FileResourceRepositoryTestImpl;
+    connectionId?: string;
+    knowledgeBaseId?: string;
+    knowledgeBaseRepo?: KnowledgeBaseRepositoryTestImpl;
+  } = {},
+): void {
   setRepositories({
     authRepository: new AuthRepositoryTestImpl(),
     connectionRepository: new ConnectionRepositoryTestImpl(
@@ -319,10 +319,11 @@ describe("FilePickerGoogleDriveContainer", () => {
     });
 
     it("should expand a folder, see the skeleton, then the content, collapse it, and when expanding again see the content directly without skeleton because it is cached", async () => {
-      const fileResourceRepository = FileResourceRepositoryTestImpl.fromFileNodes(
-        [mockFileNode("folder-1", "Documents", "folder")],
-        [mockFileNode("child-1", "cached-file.pdf", "file")],
-      );
+      const fileResourceRepository =
+        FileResourceRepositoryTestImpl.fromFileNodes(
+          [mockFileNode("folder-1", "Documents", "folder")],
+          [mockFileNode("child-1", "cached-file.pdf", "file")],
+        );
       setupDIContainer({ fileResourceRepository });
 
       renderWithProviders(<FilePickerGoogleDriveContainer />);
@@ -361,10 +362,8 @@ describe("FilePickerGoogleDriveContainer", () => {
       const fileNode = mockFileNode("file-1", "document.pdf", "file", {
         resourcePath: "docs/document.pdf",
       });
-      const fileResourceRepository = FileResourceRepositoryTestImpl.fromFileNodes(
-        [fileNode],
-        [fileNode],
-      );
+      const fileResourceRepository =
+        FileResourceRepositoryTestImpl.fromFileNodes([fileNode], [fileNode]);
       setupDIContainer({ fileResourceRepository });
 
       renderWithProviders(<FilePickerGoogleDriveContainer />);
@@ -462,7 +461,9 @@ describe("FilePickerGoogleDriveContainer", () => {
       fireEvent.click(indexBtn);
 
       await waitFor(() => {
-        expect(toast.loading).toHaveBeenCalledWith("Processing folder content...");
+        expect(toast.loading).toHaveBeenCalledWith(
+          "Processing folder content...",
+        );
       });
       await waitFor(() => {
         expect(screen.getByText("Indexed")).toBeInTheDocument();
@@ -498,10 +499,7 @@ describe("FilePickerGoogleDriveContainer", () => {
         queryKeys.activeKnowledgeBaseId(),
         "knowledge-base-1",
       );
-      queryClient.setQueryData(queryKeys.indexedIds(), [
-        "folder-1",
-        "file-1",
-      ]);
+      queryClient.setQueryData(queryKeys.indexedIds(), ["folder-1", "file-1"]);
 
       renderWithProviders(<FilePickerGoogleDriveContainer />, { queryClient });
 
@@ -513,7 +511,9 @@ describe("FilePickerGoogleDriveContainer", () => {
       fireEvent.click(removeBtn);
 
       await waitFor(() => {
-        expect(toast.loading).toHaveBeenCalledWith("Processing folder content...");
+        expect(toast.loading).toHaveBeenCalledWith(
+          "Processing folder content...",
+        );
       });
       await waitFor(() => {
         expect(screen.getByText("Not indexed")).toBeInTheDocument();

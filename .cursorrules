@@ -21,7 +21,7 @@
 
 - **Performance:** Handle `loading|error|empty` states explicitly. Use `React.memo` for list items. Move state down before using `useMemo`.
 - **Styling:** Follow class order: Layout -> Spacing -> Typography -> Color -> State. NO dynamic string interpolation for classnames.
-- **Server State:** Query keys must be centralized in `query-keys.ts`. Use **Optimistic UI** for all mutations (Index/Delete).
+- **Server State:** Query keys must be centralized in `@/utils/query-keys.ts`. Use **Optimistic UI** for all mutations (Index/Delete).
 - **Stability:** Avoid Layout Shift (CLS). Use fixed-size Skeletons for loading states.
 
 ## 📂 File Organization

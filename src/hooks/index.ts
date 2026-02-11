@@ -5,4 +5,3 @@ export {
   useIndexedResourceIds,
   useKnowledgeBaseActions,
 } from "./use-knowledge-base-actions";
-export { queryKeys } from "./query-keys";

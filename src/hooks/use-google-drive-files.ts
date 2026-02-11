@@ -1,8 +1,8 @@
 "use client";
 
 import { getFilesAction } from "@/actions/files.actions";
+import { queryKeys } from "@/hooks/utils/query-keys";
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys } from "./query-keys";
 
 /** 1 min — data considered fresh; no refetch when re-mounting */
 const STALE_TIME_MS = 60 * 1000;

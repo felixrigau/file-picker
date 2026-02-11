@@ -1,19 +1,19 @@
 "use client";
 
-import {
-  deleteFromKnowledgeBaseAction,
-  deleteFromKnowledgeBaseBatchAction,
-  syncToKnowledgeBaseAction,
-} from "@/actions/knowledge-base.actions";
 import { getConnectionIdAction } from "@/actions/connection.actions";
 import {
   getDescendantResourceIdsAction,
   getDescendantResourcesWithPathsAction,
 } from "@/actions/files.actions";
+import {
+  deleteFromKnowledgeBaseAction,
+  deleteFromKnowledgeBaseBatchAction,
+  syncToKnowledgeBaseAction,
+} from "@/actions/knowledge-base.actions";
+import { queryKeys } from "@/hooks/utils/query-keys";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { queryKeys } from "./query-keys";
 
 /** Query key for client-side indexed resource ids (optimistic + persisted). */
 const INDEXED_IDS_KEY = queryKeys.indexedIds();
@@ -107,7 +107,10 @@ export function useKnowledgeBaseActions() {
       toast.error(msg, { id: context?.toastId });
     },
     onSuccess: (result, variables, context) => {
-      queryClient.setQueryData(ACTIVE_KNOWLEDGE_BASE_KEY, result.knowledge_base_id);
+      queryClient.setQueryData(
+        ACTIVE_KNOWLEDGE_BASE_KEY,
+        result.knowledge_base_id,
+      );
       if (context?.toastId != null) {
         const msg = context.isFolder
           ? `All content in '${context.folderName}' has been indexed.`
@@ -147,7 +150,10 @@ export function useKnowledgeBaseActions() {
       toast.error("Error indexing selection", { id: context?.toastId });
     },
     onSuccess: (result, _vars, context) => {
-      queryClient.setQueryData(ACTIVE_KNOWLEDGE_BASE_KEY, result.knowledge_base_id);
+      queryClient.setQueryData(
+        ACTIVE_KNOWLEDGE_BASE_KEY,
+        result.knowledge_base_id,
+      );
       if (context?.toastId != null) {
         toast.success("Selection indexed successfully", {
           id: context.toastId,

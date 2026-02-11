@@ -1,26 +1,31 @@
-import { queryKeys } from "@/hooks/query-keys";
 import {
   useActiveKnowledgeBaseId,
   useIndexedResourceIds,
   useKnowledgeBaseActions,
 } from "@/hooks/use-knowledge-base-actions";
-import { createWrapper } from "@/test/test-utils";
-import { QueryClient } from "@tanstack/react-query";
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetRepositories, setRepositories } from "@/infra/modules/di-container";
+import { queryKeys } from "@/hooks/utils/query-keys";
 import {
   AuthRepositoryTestImpl,
   ConnectionRepositoryTestImpl,
   FileResourceRepositoryTestImpl,
   KnowledgeBaseRepositoryTestImpl,
 } from "@/infra/adapters/test";
+import {
+  resetRepositories,
+  setRepositories,
+} from "@/infra/modules/di-container";
+import { createWrapper } from "@/test/test-utils";
+import { QueryClient } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-function setupDIContainer(options: {
-  knowledgeBaseRepo?: KnowledgeBaseRepositoryTestImpl;
-  fileResourceRepository?: FileResourceRepositoryTestImpl;
-  connectionId?: string;
-} = {}): void {
+function setupDIContainer(
+  options: {
+    knowledgeBaseRepo?: KnowledgeBaseRepositoryTestImpl;
+    fileResourceRepository?: FileResourceRepositoryTestImpl;
+    connectionId?: string;
+  } = {},
+): void {
   setRepositories({
     authRepository: new AuthRepositoryTestImpl(),
     connectionRepository: new ConnectionRepositoryTestImpl(
