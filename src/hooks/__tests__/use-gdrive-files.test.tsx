@@ -1,6 +1,6 @@
 import { useGDriveFiles } from "@/hooks/use-gdrive-files";
 import { createWrapper } from "@/test/test-utils";
-import type { FileNode, PaginatedResult } from "@/types/domain";
+import type { FileNode, PaginatedFileNodes } from "@/types/domain";
 import { QueryClient } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,7 +11,7 @@ vi.mock("@/app/actions/server-actions", () => ({
 
 const { getFilesAction } = await import("@/app/actions/server-actions");
 
-const mockPaginated = (data: FileNode[]): PaginatedResult<FileNode> => ({
+const mockPaginated = (data: FileNode[]): PaginatedFileNodes => ({
   items: data,
   nextCursor: null,
   currentCursor: null,

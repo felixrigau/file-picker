@@ -28,7 +28,7 @@ export function getGDriveQueryOptions(folderId: string | undefined) {
  * Stale-while-revalidate: cached data shown instantly when re-navigating.
  *
  * @param folderId - Optional resource_id to list children of; omit for root
- * @returns TanStack Query result with PaginatedResult<FileNode>
+ * @returns TanStack Query result with PaginatedFileNodes
  */
 export function useGDriveFiles(folderId?: string) {
   return useQuery(getGDriveQueryOptions(folderId));

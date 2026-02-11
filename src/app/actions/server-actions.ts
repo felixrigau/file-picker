@@ -3,11 +3,11 @@
 import { mapPaginatedApiResponseToResult } from "@/lib/api-mappers";
 import { getApiService } from "@/lib/api-service";
 import type { IndexingParams } from "@/types/api";
-import type { FileNode, PaginatedResult } from "@/types/domain";
+import type { PaginatedFileNodes } from "@/types/domain";
 
 export async function getFilesAction(
   folderId?: string,
-): Promise<PaginatedResult<FileNode>> {
+): Promise<PaginatedFileNodes> {
   const apiResponse = await getApiService().fetchGDriveContents(folderId);
   return mapPaginatedApiResponseToResult(apiResponse, folderId);
 }

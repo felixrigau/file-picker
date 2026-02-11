@@ -1,6 +1,6 @@
 import type { PaginatedApiResponse } from "@/types/api";
 import type { ApiResource } from "@/types/api";
-import type { FileNode, PaginatedResult } from "@/types/domain";
+import type { FileNode, PaginatedFileNodes } from "@/types/domain";
 
 /**
  * Extracts display name from inode path (last segment).
@@ -37,17 +37,17 @@ export function mapResourceToFileNode(
 }
 
 /**
- * Maps paginated API response to domain PaginatedResult.
+ * Maps paginated API response to domain PaginatedFileNodes.
  * API → Domain boundary for list responses.
  *
  * @param apiResponse - Raw paginated response from API
  * @param parentId - Optional parent folder id for child nodes
- * @returns Domain PaginatedResult for View consumption
+ * @returns Domain PaginatedFileNodes for View consumption
  */
 export function mapPaginatedApiResponseToResult(
   apiResponse: PaginatedApiResponse<ApiResource>,
   parentId?: string,
-): PaginatedResult<FileNode> {
+): PaginatedFileNodes {
   return {
     items: apiResponse.data.map((r) => mapResourceToFileNode(r, parentId)),
     nextCursor: apiResponse.next_cursor,

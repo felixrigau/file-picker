@@ -34,9 +34,9 @@ export interface FileNodeList {
   files: FileNode[];
 }
 
-/** Paginated result for domain layer. camelCase for View consumption. */
-export interface PaginatedResult<T> {
-  items: T[];
+/** Paginated list of file nodes. camelCase for View consumption. */
+export interface PaginatedFileNodes {
+  items: FileNode[];
   nextCursor: string | null;
   currentCursor: string | null;
 }

@@ -1,7 +1,7 @@
 import { FilePickerShell } from "../FilePickerShell";
 import { createTestQueryClient, renderWithProviders } from "@/test/test-utils";
 import { queryKeys } from "@/hooks/query-keys";
-import type { FileNode, PaginatedResult } from "@/types/domain";
+import type { FileNode, PaginatedFileNodes } from "@/types/domain";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   fireEvent,
@@ -44,7 +44,7 @@ const serverActions = await import("@/app/actions/server-actions");
 const { getFilesAction } = serverActions;
 const { toast } = await import("sonner");
 
-function mockPaginated(data: FileNode[]): PaginatedResult<FileNode> {
+function mockPaginated(data: FileNode[]): PaginatedFileNodes {
   return { items: data, nextCursor: null, currentCursor: null };
 }
 

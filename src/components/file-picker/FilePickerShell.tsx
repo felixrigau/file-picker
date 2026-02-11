@@ -13,7 +13,7 @@ import { applyFilters } from "@/utils/filter-files";
 import { sortFiles } from "@/utils/sort-files";
 import type {
   FileNode,
-  PaginatedResult,
+  PaginatedFileNodes,
   StatusFilter,
   TypeFilter,
 } from "@/types/domain";
@@ -221,7 +221,7 @@ export function FilePickerShell() {
     const idsToFetch: string[] = [];
 
     for (const id of toFetch) {
-      const cached = queryClient.getQueryData<PaginatedResult<FileNode>>(
+      const cached = queryClient.getQueryData<PaginatedFileNodes>(
         queryKeys.gdrive(id),
       );
       if (cached?.items) {
