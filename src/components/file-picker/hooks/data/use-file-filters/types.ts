@@ -24,8 +24,11 @@ export interface UseFileFiltersParams {
 export interface UseFileFiltersResult {
   data: {
     processedResources: FileNode[];
-    filters: FileFiltersValues;
+    search: string;
+    status: StatusFilter;
+    type: TypeFilter;
+    sortOrder: SortOrder;
     hasActiveFilters: boolean;
   };
-  actions: FileFiltersActions;
+  action: FileFiltersActions;
 }

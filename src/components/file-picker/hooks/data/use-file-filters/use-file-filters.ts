@@ -89,12 +89,7 @@ export function useFileFilters({
   const hasActiveFilters =
     status !== "all" || type !== "all" || search.trim() !== "";
 
-  const filters: FileFiltersValues = useMemo(
-    () => ({ search, status, type, sortOrder }),
-    [search, status, type, sortOrder],
-  );
-
-  const actions: FileFiltersActions = useMemo(
+  const action: FileFiltersActions = useMemo(
     () => ({
       setSearch,
       updateStatus,
@@ -108,9 +103,12 @@ export function useFileFilters({
   return {
     data: {
       processedResources,
-      filters,
+      search,
+      status,
+      type,
+      sortOrder,
       hasActiveFilters,
     },
-    actions,
+    action,
   };
 }

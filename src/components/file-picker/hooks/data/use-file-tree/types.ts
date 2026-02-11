@@ -20,7 +20,7 @@ export interface UseFileTreeResult {
     expandedIds: Set<string>;
     breadcrumbPath: BreadcrumbSegment[];
   };
-  actions: {
+  action: {
     mapsTo: (id: string | undefined, displayName?: string) => void;
     onFolderToggle: (folderId: string) => void;
     onFolderHover: (folderId: string) => void;

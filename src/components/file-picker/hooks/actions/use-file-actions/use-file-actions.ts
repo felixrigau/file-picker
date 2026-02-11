@@ -24,7 +24,7 @@ export interface UseFileActionsResult {
     hasGenericError: boolean;
     errorMessage: string;
   };
-  actions: {
+  action: {
     handleIndex: (node: FileNode) => void;
     handleDeIndex: (node: FileNode) => void;
     refetch: () => void;
@@ -118,7 +118,7 @@ export function useFileActions({
       hasGenericError,
       errorMessage,
     },
-    actions: {
+    action: {
       handleIndex,
       handleDeIndex,
       refetch,

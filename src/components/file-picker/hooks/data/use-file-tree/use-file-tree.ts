@@ -186,7 +186,7 @@ export function useFileTree({
       expandedIds,
       breadcrumbPath,
     },
-    actions: {
+    action: {
       mapsTo,
       onFolderToggle,
       onFolderHover,
