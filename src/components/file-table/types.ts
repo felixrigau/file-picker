@@ -1,7 +1,6 @@
 import type { FileNode } from "@/domain/types";
 
-/** Sort direction: ascending (A-Z) or descending (Z-A) */
-export type SortOrder = "asc" | "desc";
+import type { SortOrder } from "@/domain/types";
 
 /** Resource row with tree depth for indentation */
 export interface ResourceRow {

@@ -7,7 +7,7 @@ import {
   ACTIONS_COLUMN_WIDTH,
   STATUS_COLUMN_WIDTH,
 } from "../../constants";
-import type { SortOrder } from "../../types";
+import type { SortOrder } from "@/domain/types";
 
 interface ColumnsHeaderProps {
   sortOrder?: SortOrder;

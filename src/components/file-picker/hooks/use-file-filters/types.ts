@@ -1,5 +1,5 @@
 import type { FileNode, StatusFilter, TypeFilter } from "@/domain/types";
-import type { SortOrder } from "@/utils/sort-files";
+import type { SortOrder } from "@/domain/types";
 
 export interface FileFiltersValues {
   search: string;

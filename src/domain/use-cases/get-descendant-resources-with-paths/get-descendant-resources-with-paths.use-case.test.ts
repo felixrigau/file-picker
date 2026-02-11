@@ -1,6 +1,6 @@
-import { getDescendantResourcesWithPathsUseCase } from "../get-descendant-resources-with-paths.use-case";
 import { FileResourceRepositoryTestImpl } from "@/infra/adapters/test";
 import { describe, expect, it } from "vitest";
+import { getDescendantResourcesWithPathsUseCase } from "./get-descendant-resources-with-paths.use-case";
 
 describe("getDescendantResourcesWithPathsUseCase", () => {
   it("returns descendant paths from repo", async () => {

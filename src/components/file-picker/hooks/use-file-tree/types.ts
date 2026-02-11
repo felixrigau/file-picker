@@ -1,6 +1,6 @@
 import type { FileNode } from "@/domain/types";
 import type { DisplayRow } from "@/components/file-table";
-import type { SortOrder } from "@/utils/sort-files";
+import type { SortOrder } from "@/domain/types";
 
 export interface BreadcrumbSegment {
   id: string;

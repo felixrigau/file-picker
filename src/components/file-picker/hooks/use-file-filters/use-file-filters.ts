@@ -1,9 +1,14 @@
 "use client";
 
 import type { StatusFilter, TypeFilter } from "@/domain/types";
-import type { SortOrder } from "@/utils/sort-files";
-import { applyFilters } from "@/utils/filter-files";
-import { sortFiles } from "@/utils/sort-files";
+import type { SortOrder } from "@/domain/types";
+import {
+  applyFilesFiltersUseCase,
+  parseSortOrderUseCase,
+  parseStatusUseCase,
+  parseTypeUseCase,
+  sortFilesUseCase,
+} from "@/domain/use-cases";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { SORT_ORDER_PARAM, STATUS_PARAM, TYPE_PARAM } from "./constants";
@@ -13,12 +18,7 @@ import type {
   UseFileFiltersParams,
   UseFileFiltersResult,
 } from "./types";
-import {
-  buildUrlParams,
-  parseSortOrder,
-  parseStatus,
-  parseType,
-} from "./utils";
+import { buildUrlParams } from "./utils";
 
 export function useFileFilters({
   rawItems,
@@ -30,9 +30,9 @@ export function useFileFilters({
 
   const [search, setSearch] = useState("");
 
-  const status = parseStatus(searchParams.get(STATUS_PARAM));
-  const type = parseType(searchParams.get(TYPE_PARAM));
-  const sortOrder = parseSortOrder(searchParams.get(SORT_ORDER_PARAM));
+  const status = parseStatusUseCase(searchParams.get(STATUS_PARAM));
+  const type = parseTypeUseCase(searchParams.get(TYPE_PARAM));
+  const sortOrder = parseSortOrderUseCase(searchParams.get(SORT_ORDER_PARAM));
 
   const syncUrl = useCallback(
     (params: URLSearchParams) => {
@@ -77,13 +77,13 @@ export function useFileFilters({
   }, [searchParams, syncUrl]);
 
   const processedResources = useMemo(() => {
-    const filtered = applyFilters(rawItems, {
+    const filtered = applyFilesFiltersUseCase(rawItems, {
       searchQuery: search,
       status,
       type,
       indexedIds,
     });
-    return sortFiles(filtered, sortOrder);
+    return sortFilesUseCase(filtered, sortOrder);
   }, [rawItems, search, status, type, sortOrder, indexedIds]);
 
   const hasActiveFilters =

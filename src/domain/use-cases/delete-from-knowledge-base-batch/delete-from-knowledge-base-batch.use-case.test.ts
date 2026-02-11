@@ -1,6 +1,6 @@
-import { deleteFromKnowledgeBaseBatchUseCase } from "../delete-from-knowledge-base-batch.use-case";
 import type { KnowledgeBaseRepository } from "@/domain/ports/knowledge-base-repository.port";
 import { describe, expect, it } from "vitest";
+import { deleteFromKnowledgeBaseBatchUseCase } from "./delete-from-knowledge-base-batch.use-case";
 
 describe("deleteFromKnowledgeBaseBatchUseCase", () => {
   it("returns successCount for all successful deletes", async () => {

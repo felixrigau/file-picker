@@ -1,6 +1,6 @@
-import { syncToKnowledgeBaseUseCase } from "../sync-to-knowledge-base.use-case";
 import { KnowledgeBaseRepositoryTestImpl } from "@/infra/adapters/test";
 import { describe, expect, it } from "vitest";
+import { syncToKnowledgeBaseUseCase } from "./sync-to-knowledge-base.use-case";
 
 describe("syncToKnowledgeBaseUseCase", () => {
   it("delegates to repo and returns knowledge_base_id", async () => {

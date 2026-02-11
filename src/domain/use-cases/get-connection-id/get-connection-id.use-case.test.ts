@@ -1,6 +1,6 @@
-import { getConnectionIdUseCase } from "../get-connection-id.use-case";
 import { ConnectionRepositoryTestImpl } from "@/infra/adapters/test";
 import { describe, expect, it } from "vitest";
+import { getConnectionIdUseCase } from "./get-connection-id.use-case";
 
 describe("getConnectionIdUseCase", () => {
   it("returns connectionId from repo", async () => {

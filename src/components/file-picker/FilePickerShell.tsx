@@ -1,19 +1,13 @@
 "use client";
 
-import {
-  useActiveKnowledgeBaseId,
-  useGDriveFiles,
-  useIndexedResourceIds,
-  useKBActions,
-} from "@/hooks";
+import { useGDriveFiles, useIndexedResourceIds } from "@/hooks";
+import { useFileActions } from "./hooks/use-file-actions";
 import { useFileFilters } from "./hooks/use-file-filters";
 import { useFileTree } from "./hooks/use-file-tree";
 import { cn } from "@/view/utils";
-import type { FileNode } from "@/domain/types";
 import { ChevronRight } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { FileTable } from "@/components/file-table";
 import { FilterBar } from "@/components/filter-bar";
 
@@ -29,7 +23,6 @@ export function FilePickerShell() {
     useGDriveFiles(currentFolderId);
   const indexedIdsRaw = useIndexedResourceIds();
   const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
-  const activeKnowledgeBaseId = useActiveKnowledgeBaseId();
 
   const {
     processedResources,
@@ -48,69 +41,16 @@ export function FilePickerShell() {
     onNavigateStart: () => actions.setSearch(""),
   });
 
-  const {
-    indexNode,
-    indexResource,
-    deIndexResource,
-    deIndexFolder,
-    deIndexNode,
-  } = useKBActions();
+  const fileActions = useFileActions({
+    isError,
+    error: error instanceof Error ? error : null,
+    onRefetch: refetch,
+  });
 
-  const isMissingEnv =
-    isError &&
-    error instanceof Error &&
-    error.message.includes("Missing required environment variable");
-
-  const hasGenericError = isError && !isMissingEnv;
-
-  const handleIndexRequest = useCallback(
-    (node: FileNode) => {
-      indexNode(node);
-    },
-    [indexNode],
-  );
-
-  const handleDeIndexRequest = useCallback(
-    (node: FileNode) => {
-      if (activeKnowledgeBaseId == null) {
-        toast.error("Index a file first to enable remove");
-        return;
-      }
-      if (node.resourcePath == null) {
-        toast.error("Cannot remove: missing resource path");
-        return;
-      }
-      deIndexNode(node, activeKnowledgeBaseId);
-    },
-    [activeKnowledgeBaseId, deIndexNode],
-  );
-
-  const isIndexPending = useCallback(
-    (resourceId: string) =>
-      indexResource.isPending &&
-      (indexResource.variables?.expandedIds?.includes(resourceId) ?? false),
-    [indexResource.isPending, indexResource.variables],
-  );
-
-  const isDeIndexPending = useCallback(
-    (resourceId: string) => {
-      if (deIndexResource.isPending) {
-        return deIndexResource.variables?.resourceId === resourceId;
-      }
-      if (deIndexFolder.isPending) {
-        const ids =
-          deIndexFolder.variables?.items?.map((i) => i.resourceId) ?? [];
-        return ids.includes(resourceId);
-      }
-      return false;
-    },
-    [
-      deIndexResource.isPending,
-      deIndexResource.variables,
-      deIndexFolder.isPending,
-      deIndexFolder.variables,
-    ],
-  );
+  const emptyMessage =
+    (data?.items?.length ?? 0) === 0
+      ? "No files or folders"
+      : "No files found";
 
   return (
     <div
@@ -169,7 +109,7 @@ export function FilePickerShell() {
       {/* Scrollable area — fills remaining height, prevents CLS when content changes */}
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-          {isMissingEnv ? (
+          {fileActions.isMissingEnv ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
               <p className="font-medium">
                 Environment variables not configured
@@ -198,13 +138,11 @@ export function FilePickerShell() {
                 .
               </p>
             </div>
-          ) : hasGenericError ? (
+          ) : fileActions.hasGenericError ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
               <p className="font-medium">Error loading files</p>
-              <p className="text-sm">
-                {error instanceof Error ? error.message : "Unknown error"}
-              </p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <p className="text-sm">{fileActions.errorMessage}</p>
+              <Button variant="outline" size="sm" onClick={fileActions.refetch}>
                 Retry
               </Button>
             </div>
@@ -217,17 +155,13 @@ export function FilePickerShell() {
               onFolderToggle={tree.onFolderToggle}
               expandedIds={tree.expandedIds}
               indexedIds={indexedIdsRaw}
-              onIndexRequest={handleIndexRequest}
-              onDeIndexRequest={handleDeIndexRequest}
-              isIndexPending={isIndexPending}
-              isDeIndexPending={isDeIndexPending}
+              onIndexRequest={fileActions.handleIndex}
+              onDeIndexRequest={fileActions.handleDeIndex}
+              isIndexPending={fileActions.isIndexPending}
+              isDeIndexPending={fileActions.isDeIndexPending}
               sortOrder={filters.sortOrder}
               onSortToggle={actions.toggleSort}
-              emptyMessage={
-                (data?.items?.length ?? 0) === 0
-                  ? "No files or folders"
-                  : "No files found"
-              }
+              emptyMessage={emptyMessage}
               onResetFilters={hasActiveFilters ? actions.clearFilters : undefined}
             />
           )}

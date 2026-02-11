@@ -1,6 +1,6 @@
-import { deleteFromKnowledgeBaseUseCase } from "../delete-from-knowledge-base.use-case";
 import { KnowledgeBaseRepositoryTestImpl } from "@/infra/adapters/test";
 import { describe, expect, it } from "vitest";
+import { deleteFromKnowledgeBaseUseCase } from "./delete-from-knowledge-base.use-case";
 
 describe("deleteFromKnowledgeBaseUseCase", () => {
   it("delegates to repo delete", async () => {

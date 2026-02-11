@@ -1,7 +1,7 @@
 import type { FileNode } from "@/domain/types";
 import type { DisplayRow } from "@/components/file-table";
-import { sortFiles } from "@/utils/sort-files";
-import type { SortOrder } from "@/utils/sort-files";
+import { sortFilesUseCase } from "@/domain/use-cases";
+import type { SortOrder } from "@/domain/types";
 import { SKELETON_ROWS_PER_FOLDER } from "./constants";
 
 export function buildDisplayRows(
@@ -20,7 +20,7 @@ export function buildDisplayRows(
       const children = childData.get(node.id);
 
       if (children) {
-        const sortedChildren = sortFiles(children, sortOrder);
+        const sortedChildren = sortFilesUseCase(children, sortOrder);
         rows.push(
           ...buildDisplayRows(
             sortedChildren,

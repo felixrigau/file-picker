@@ -1,6 +1,6 @@
-import { getDescendantResourceIdsUseCase } from "../get-descendant-resource-ids.use-case";
 import { FileResourceRepositoryTestImpl } from "@/infra/adapters/test";
 import { describe, expect, it } from "vitest";
+import { getDescendantResourceIdsUseCase } from "./get-descendant-resource-ids.use-case";
 
 describe("getDescendantResourceIdsUseCase", () => {
   it("returns descendant ids from repo", async () => {

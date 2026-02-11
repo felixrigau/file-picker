@@ -1,7 +1,7 @@
-import { getFilesUseCase } from "../get-files.use-case";
-import { FileResourceRepositoryTestImpl } from "@/infra/adapters/test";
 import type { FileNode } from "@/domain/types";
+import { FileResourceRepositoryTestImpl } from "@/infra/adapters/test";
 import { describe, expect, it } from "vitest";
+import { getFilesUseCase } from "./get-files.use-case";
 
 function mockFileNode(
   id: string,

@@ -1,37 +1,6 @@
-import type { SortOrder } from "@/utils/sort-files";
+import type { SortOrder } from "@/domain/types";
 import type { StatusFilter, TypeFilter } from "@/domain/types";
-import {
-  DEFAULT_SORT_ORDER,
-  DEFAULT_STATUS,
-  DEFAULT_TYPE,
-  SORT_ORDER_PARAM,
-  STATUS_PARAM,
-  TYPE_PARAM,
-  VALID_SORT_ORDER,
-  VALID_STATUS,
-  VALID_TYPE,
-} from "./constants";
-
-export function parseStatus(value: string | null): StatusFilter {
-  if (value && (VALID_STATUS as readonly string[]).includes(value)) {
-    return value as StatusFilter;
-  }
-  return DEFAULT_STATUS;
-}
-
-export function parseType(value: string | null): TypeFilter {
-  if (value && (VALID_TYPE as readonly string[]).includes(value)) {
-    return value as TypeFilter;
-  }
-  return DEFAULT_TYPE;
-}
-
-export function parseSortOrder(value: string | null): SortOrder {
-  if (value && (VALID_SORT_ORDER as readonly string[]).includes(value)) {
-    return value as SortOrder;
-  }
-  return DEFAULT_SORT_ORDER;
-}
+import { SORT_ORDER_PARAM, STATUS_PARAM, TYPE_PARAM } from "./constants";
 
 export function buildUrlParams(
   currentParams: URLSearchParams,

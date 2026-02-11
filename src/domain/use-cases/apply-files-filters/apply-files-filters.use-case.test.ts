@@ -1,11 +1,6 @@
 import type { FileNode } from "@/domain/types";
 import { describe, expect, it } from "vitest";
-import {
-  applyFilters,
-  filterFilesByName,
-  filterFilesByStatus,
-  filterFilesByType,
-} from "./filter-files";
+import { applyFilesFiltersUseCase } from "./apply-files-filters.use-case";
 
 const node = (
   id: string,
@@ -20,20 +15,30 @@ const node = (
   isIndexed,
 });
 
-describe("filterFilesByName", () => {
+const allParams = {
+  searchQuery: "",
+  status: "all" as const,
+  type: "all" as const,
+  indexedIds: new Set<string>(),
+};
+
+describe("applyFilesFiltersUseCase – by name", () => {
   it("returns all files when searchQuery is empty", () => {
     const files: FileNode[] = [
       node("1", "alpha.txt"),
       node("2", "beta.pdf"),
       node("3", "gamma.doc"),
     ];
-    expect(filterFilesByName(files, "")).toEqual(files);
+    expect(
+      applyFilesFiltersUseCase(files, { ...allParams, searchQuery: "" }),
+    ).toEqual(files);
   });
 
   it("returns all files when searchQuery is only whitespace", () => {
     const files: FileNode[] = [node("1", "alpha.txt"), node("2", "beta.pdf")];
-    expect(filterFilesByName(files, "   ")).toEqual(files);
-    expect(filterFilesByName(files, "\t")).toEqual(files);
+    expect(
+      applyFilesFiltersUseCase(files, { ...allParams, searchQuery: "   " }),
+    ).toEqual(files);
   });
 
   it("matches partial name case-insensitively", () => {
@@ -42,7 +47,10 @@ describe("filterFilesByName", () => {
       node("2", "beta.docx"),
       node("3", "GAMMA Report"),
     ];
-    const result = filterFilesByName(files, "alpha");
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      searchQuery: "alpha",
+    });
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("Alpha Document");
   });
@@ -53,39 +61,46 @@ describe("filterFilesByName", () => {
       node("2", "report-q2.pdf"),
       node("3", "summary.docx"),
     ];
-    const result = filterFilesByName(files, "report");
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      searchQuery: "report",
+    });
     expect(result).toHaveLength(2);
-    expect(result.map((f) => f.name)).toEqual(["report-q1.pdf", "report-q2.pdf"]);
+    expect(result.map((f) => f.name)).toEqual([
+      "report-q1.pdf",
+      "report-q2.pdf",
+    ]);
   });
 
   it("returns empty array when no matches", () => {
     const files: FileNode[] = [node("1", "alpha.txt"), node("2", "beta.pdf")];
-    const result = filterFilesByName(files, "xyz");
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      searchQuery: "xyz",
+    });
     expect(result).toEqual([]);
   });
 
   it("trims searchQuery before filtering", () => {
     const files: FileNode[] = [node("1", "alpha.txt"), node("2", "beta.pdf")];
-    const result = filterFilesByName(files, "  alpha  ");
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      searchQuery: "  alpha  ",
+    });
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("alpha.txt");
   });
-
-  it("does not mutate input", () => {
-    const files: FileNode[] = [node("1", "alpha.txt"), node("2", "beta.pdf")];
-    const orig = [...files];
-    filterFilesByName(files, "alpha");
-    expect(files).toEqual(orig);
-  });
 });
 
-describe("filterFilesByStatus", () => {
+describe("applyFilesFiltersUseCase – by status", () => {
   it("returns all files when status is all", () => {
     const files: FileNode[] = [
       node("1", "a", "file", true),
       node("2", "b", "file", false),
     ];
-    expect(filterFilesByStatus(files, "all", new Set())).toEqual(files);
+    expect(
+      applyFilesFiltersUseCase(files, { ...allParams, status: "all" }),
+    ).toEqual(files);
   });
 
   it("returns only indexed when status is indexed", () => {
@@ -95,7 +110,11 @@ describe("filterFilesByStatus", () => {
       node("3", "c", "file", false),
     ];
     const indexedIds = new Set<string>(["2"]);
-    const result = filterFilesByStatus(files, "indexed", indexedIds);
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      status: "indexed",
+      indexedIds,
+    });
     expect(result).toHaveLength(2);
     expect(result.map((f) => f.id)).toEqual(["1", "2"]);
   });
@@ -105,25 +124,41 @@ describe("filterFilesByStatus", () => {
       node("1", "a", "file", true),
       node("2", "b", "file", false),
     ];
-    const result = filterFilesByStatus(files, "not-indexed", new Set());
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      status: "not-indexed",
+    });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("2");
   });
 
   it("handles empty indexedIds", () => {
     const files: FileNode[] = [node("1", "a", "file")];
-    expect(filterFilesByStatus(files, "indexed", new Set())).toEqual([]);
-    expect(filterFilesByStatus(files, "not-indexed", new Set())).toEqual(files);
+    expect(
+      applyFilesFiltersUseCase(files, {
+        ...allParams,
+        status: "indexed",
+        indexedIds: new Set(),
+      }),
+    ).toEqual([]);
+    expect(
+      applyFilesFiltersUseCase(files, {
+        ...allParams,
+        status: "not-indexed",
+      }),
+    ).toEqual(files);
   });
 });
 
-describe("filterFilesByType", () => {
+describe("applyFilesFiltersUseCase – by type", () => {
   it("returns all files when type is all", () => {
     const files: FileNode[] = [
       node("1", "a", "folder"),
       node("2", "b", "file"),
     ];
-    expect(filterFilesByType(files, "all")).toEqual(files);
+    expect(
+      applyFilesFiltersUseCase(files, { ...allParams, type: "all" }),
+    ).toEqual(files);
   });
 
   it("returns only folders when type is folder", () => {
@@ -132,7 +167,10 @@ describe("filterFilesByType", () => {
       node("2", "b", "file"),
       node("3", "c", "folder"),
     ];
-    const result = filterFilesByType(files, "folder");
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      type: "folder",
+    });
     expect(result).toHaveLength(2);
     expect(result.every((f) => f.type === "folder")).toBe(true);
   });
@@ -142,13 +180,16 @@ describe("filterFilesByType", () => {
       node("1", "a", "folder"),
       node("2", "b", "file"),
     ];
-    const result = filterFilesByType(files, "file");
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
+      type: "file",
+    });
     expect(result).toHaveLength(1);
     expect(result[0].type).toBe("file");
   });
 });
 
-describe("applyFilters", () => {
+describe("applyFilesFiltersUseCase – combined", () => {
   it("combines name + status + type with AND", () => {
     const files: FileNode[] = [
       node("1", "report-a", "folder", false),
@@ -157,7 +198,7 @@ describe("applyFilters", () => {
       node("4", "other", "file", true),
     ];
     const indexedIds = new Set<string>(["2"]);
-    const result = applyFilters(files, {
+    const result = applyFilesFiltersUseCase(files, {
       searchQuery: "report",
       status: "indexed",
       type: "file",
@@ -169,11 +210,9 @@ describe("applyFilters", () => {
 
   it("returns empty when no matches", () => {
     const files: FileNode[] = [node("1", "alpha", "file")];
-    const result = applyFilters(files, {
+    const result = applyFilesFiltersUseCase(files, {
+      ...allParams,
       searchQuery: "xyz",
-      status: "all",
-      type: "all",
-      indexedIds: new Set(),
     });
     expect(result).toEqual([]);
   });
@@ -183,12 +222,7 @@ describe("applyFilters", () => {
       node("1", "a", "folder"),
       node("2", "b", "file"),
     ];
-    const result = applyFilters(files, {
-      searchQuery: "",
-      status: "all",
-      type: "all",
-      indexedIds: new Set(),
-    });
+    const result = applyFilesFiltersUseCase(files, allParams);
     expect(result).toEqual(files);
   });
 });

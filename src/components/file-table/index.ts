@@ -1,2 +1,2 @@
 export { FileTable } from "./file-table";
-export type { DisplayRow, FileTableProps, ResourceRow, SortOrder } from "./types";
+export type { DisplayRow, FileTableProps, ResourceRow } from "./types";
