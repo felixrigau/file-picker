@@ -22,8 +22,10 @@ export interface UseFileFiltersParams {
 }
 
 export interface UseFileFiltersResult {
-  processedResources: FileNode[];
-  filters: FileFiltersValues;
+  data: {
+    processedResources: FileNode[];
+    filters: FileFiltersValues;
+    hasActiveFilters: boolean;
+  };
   actions: FileFiltersActions;
-  hasActiveFilters: boolean;
 }

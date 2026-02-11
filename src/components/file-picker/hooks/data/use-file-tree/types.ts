@@ -15,11 +15,15 @@ export interface UseFileTreeParams {
 }
 
 export interface UseFileTreeResult {
-  displayedResources: DisplayRow[];
-  expandedIds: Set<string>;
-  breadcrumbPath: BreadcrumbSegment[];
-  mapsTo: (id: string | undefined, displayName?: string) => void;
-  onFolderToggle: (folderId: string) => void;
-  onFolderHover: (folderId: string) => void;
-  onFolderHoverCancel: (folderId: string) => void;
+  data: {
+    displayedResources: DisplayRow[];
+    expandedIds: Set<string>;
+    breadcrumbPath: BreadcrumbSegment[];
+  };
+  actions: {
+    mapsTo: (id: string | undefined, displayName?: string) => void;
+    onFolderToggle: (folderId: string) => void;
+    onFolderHover: (folderId: string) => void;
+    onFolderHoverCancel: (folderId: string) => void;
+  };
 }

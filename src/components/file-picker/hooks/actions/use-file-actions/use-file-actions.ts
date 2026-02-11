@@ -17,14 +17,18 @@ export interface UseFileActionsParams {
 }
 
 export interface UseFileActionsResult {
-  handleIndex: (node: FileNode) => void;
-  handleDeIndex: (node: FileNode) => void;
-  isIndexPending: (resourceId: string) => boolean;
-  isDeIndexPending: (resourceId: string) => boolean;
-  isMissingEnv: boolean;
-  hasGenericError: boolean;
-  errorMessage: string;
-  refetch: () => void;
+  data: {
+    isIndexPending: (resourceId: string) => boolean;
+    isDeIndexPending: (resourceId: string) => boolean;
+    isMissingEnv: boolean;
+    hasGenericError: boolean;
+    errorMessage: string;
+  };
+  actions: {
+    handleIndex: (node: FileNode) => void;
+    handleDeIndex: (node: FileNode) => void;
+    refetch: () => void;
+  };
 }
 
 export function useFileActions({
@@ -107,13 +111,17 @@ export function useFileActions({
   );
 
   return {
-    handleIndex,
-    handleDeIndex,
-    isIndexPending,
-    isDeIndexPending,
-    isMissingEnv,
-    hasGenericError,
-    errorMessage,
-    refetch,
+    data: {
+      isIndexPending,
+      isDeIndexPending,
+      isMissingEnv,
+      hasGenericError,
+      errorMessage,
+    },
+    actions: {
+      handleIndex,
+      handleDeIndex,
+      refetch,
+    },
   };
 }

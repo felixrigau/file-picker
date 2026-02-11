@@ -106,9 +106,11 @@ export function useFileFilters({
   );
 
   return {
-    processedResources,
-    filters,
+    data: {
+      processedResources,
+      filters,
+      hasActiveFilters,
+    },
     actions,
-    hasActiveFilters,
   };
 }

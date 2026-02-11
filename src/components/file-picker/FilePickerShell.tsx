@@ -1,9 +1,8 @@
 "use client";
 
 import { useGDriveFiles, useIndexedResourceIds } from "@/hooks";
-import { useFileActions } from "./hooks/use-file-actions";
-import { useFileFilters } from "./hooks/use-file-filters";
-import { useFileTree } from "./hooks/use-file-tree";
+import { useFileActions } from "./hooks/actions";
+import { useFileFilters, useFileTree } from "./hooks/data";
 import { cn } from "@/view/utils";
 import { ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -24,21 +23,16 @@ export function FilePickerShell() {
   const indexedIdsRaw = useIndexedResourceIds();
   const indexedIds = useMemo(() => new Set(indexedIdsRaw), [indexedIdsRaw]);
 
-  const {
-    processedResources,
-    filters,
-    actions,
-    hasActiveFilters,
-  } = useFileFilters({
+  const filters = useFileFilters({
     rawItems: data?.items ?? [],
     indexedIds,
   });
 
   const tree = useFileTree({
-    sortedResources: processedResources,
-    sortOrder: filters.sortOrder,
+    sortedResources: filters.data.processedResources,
+    sortOrder: filters.data.filters.sortOrder,
     onCurrentFolderChange: setCurrentFolderId,
-    onNavigateStart: () => actions.setSearch(""),
+    onNavigateStart: () => filters.actions.setSearch(""),
   });
 
   const fileActions = useFileActions({
@@ -66,17 +60,17 @@ export function FilePickerShell() {
       >
         <button
           type="button"
-          onClick={() => tree.mapsTo(undefined)}
+          onClick={() => tree.actions.mapsTo(undefined)}
           className="rounded px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           Root
         </button>
-        {tree.breadcrumbPath.map((segment) => (
+        {tree.data.breadcrumbPath.map((segment) => (
           <span key={segment.id} className="flex items-center gap-2">
             <ChevronRight className="size-4 text-muted-foreground" />
             <button
               type="button"
-              onClick={() => tree.mapsTo(segment.id, segment.name)}
+              onClick={() => tree.actions.mapsTo(segment.id, segment.name)}
               className="rounded px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               {segment.name}
@@ -89,18 +83,18 @@ export function FilePickerShell() {
       <div className="flex shrink-0 items-center gap-2">
         <div className="min-w-0 flex-1">
           <FilterBar
-            status={filters.status}
-            type={filters.type}
-            onStatusChange={actions.updateStatus}
-            onTypeChange={actions.updateType}
-            onClearFilters={actions.clearFilters}
-            hasActiveFilters={hasActiveFilters}
+            status={filters.data.filters.status}
+            type={filters.data.filters.type}
+            onStatusChange={filters.actions.updateStatus}
+            onTypeChange={filters.actions.updateType}
+            onClearFilters={filters.actions.clearFilters}
+            hasActiveFilters={filters.data.hasActiveFilters}
           />
         </div>
         <input
           type="search"
-          value={filters.search}
-          onChange={(e) => actions.setSearch(e.target.value)}
+          value={filters.data.filters.search}
+          onChange={(e) => filters.actions.setSearch(e.target.value)}
           placeholder="Search by..."
           className="w-2/5 min-w-32 shrink-0 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
@@ -109,7 +103,7 @@ export function FilePickerShell() {
       {/* Scrollable area — fills remaining height, prevents CLS when content changes */}
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
         <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-          {fileActions.isMissingEnv ? (
+          {fileActions.data.isMissingEnv ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
               <p className="font-medium">
                 Environment variables not configured
@@ -138,31 +132,31 @@ export function FilePickerShell() {
                 .
               </p>
             </div>
-          ) : fileActions.hasGenericError ? (
+          ) : fileActions.data.hasGenericError ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-muted-foreground">
               <p className="font-medium">Error loading files</p>
-              <p className="text-sm">{fileActions.errorMessage}</p>
-              <Button variant="outline" size="sm" onClick={fileActions.refetch}>
+              <p className="text-sm">{fileActions.data.errorMessage}</p>
+              <Button variant="outline" size="sm" onClick={fileActions.actions.refetch}>
                 Retry
               </Button>
             </div>
           ) : (
             <FileTable
-              resources={tree.displayedResources}
+              resources={tree.data.displayedResources}
               isLoading={isLoading}
-              onFolderHover={tree.onFolderHover}
-              onFolderHoverCancel={tree.onFolderHoverCancel}
-              onFolderToggle={tree.onFolderToggle}
-              expandedIds={tree.expandedIds}
+              onFolderHover={tree.actions.onFolderHover}
+              onFolderHoverCancel={tree.actions.onFolderHoverCancel}
+              onFolderToggle={tree.actions.onFolderToggle}
+              expandedIds={tree.data.expandedIds}
               indexedIds={indexedIdsRaw}
-              onIndexRequest={fileActions.handleIndex}
-              onDeIndexRequest={fileActions.handleDeIndex}
-              isIndexPending={fileActions.isIndexPending}
-              isDeIndexPending={fileActions.isDeIndexPending}
-              sortOrder={filters.sortOrder}
-              onSortToggle={actions.toggleSort}
+              onIndexRequest={fileActions.actions.handleIndex}
+              onDeIndexRequest={fileActions.actions.handleDeIndex}
+              isIndexPending={fileActions.data.isIndexPending}
+              isDeIndexPending={fileActions.data.isDeIndexPending}
+              sortOrder={filters.data.filters.sortOrder}
+              onSortToggle={filters.actions.toggleSort}
               emptyMessage={emptyMessage}
-              onResetFilters={hasActiveFilters ? actions.clearFilters : undefined}
+              onResetFilters={filters.data.hasActiveFilters ? filters.actions.clearFilters : undefined}
             />
           )}
         </div>

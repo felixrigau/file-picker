@@ -181,12 +181,16 @@ export function useFileTree({
   );
 
   return {
-    displayedResources,
-    expandedIds,
-    breadcrumbPath,
-    mapsTo,
-    onFolderToggle,
-    onFolderHover,
-    onFolderHoverCancel,
+    data: {
+      displayedResources,
+      expandedIds,
+      breadcrumbPath,
+    },
+    actions: {
+      mapsTo,
+      onFolderToggle,
+      onFolderHover,
+      onFolderHoverCancel,
+    },
   };
 }
