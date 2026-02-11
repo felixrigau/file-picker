@@ -44,6 +44,7 @@ Reference `.agents/skills/vercel-react-best-practices` for waterfalls, bundle si
 - `@/app/actions/`: Entry point for Server-side logic (Wraps `ApiService`).
 - `@/hooks/`: Modular hooks (e.g., `use-gdrive-files.ts`). Exported from `index.ts`.
 - `@/lib/`: Singleton services & business logic (e.g., `api-service.ts`).
+- `@/view/`: View-layer utilities (e.g., `utils.ts` with `cn()` for Tailwind).
 - `@/types/`: Types split by layer — `domain.ts` (View), `api.ts` (infra). Flow: API → Domain → View. View imports only from `@/types/domain`. Avoid `any`.
 
 ## 🧪 Testing Protocol

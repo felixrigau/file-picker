@@ -8,7 +8,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn } from "@/view/utils";
 import type { StatusFilter, TypeFilter } from "@/types/domain";
 import {
   CheckCircle2,

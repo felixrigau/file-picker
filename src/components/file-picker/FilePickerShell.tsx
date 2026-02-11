@@ -8,7 +8,7 @@ import {
 } from "@/hooks";
 import { getGDriveQueryOptions } from "@/hooks/use-gdrive-files";
 import { queryKeys } from "@/hooks/query-keys";
-import { cn } from "@/lib/utils";
+import { cn } from "@/view/utils";
 import { applyFilters } from "@/utils/filter-files";
 import { sortFiles } from "@/utils/sort-files";
 import type {
