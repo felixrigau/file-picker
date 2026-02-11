@@ -14,7 +14,6 @@ import { useCallback, useMemo, useState, useTransition } from "react";
 import { SORT_ORDER_PARAM, STATUS_PARAM, TYPE_PARAM } from "./constants";
 import type {
   FileFiltersActions,
-  FileFiltersValues,
   UseFileFiltersParams,
   UseFileFiltersResult,
 } from "./types";
