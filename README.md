@@ -31,8 +31,56 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run test`          | Tests (watch)                  |
 | `npm run test:run`      | Tests (single run)             |
 | `npm run test:coverage` | Tests with coverage            |
-| `npm run check`         | Lint + type-check + tests      |
-| `npm run docs:generate` | Generate Typedoc documentation |
+| `npm run check`          | Lint + type-check + tests      |
+| `npm run docs:generate`  | Generate Typedoc documentation |
+| `npm run audit:ci`       | Run Lighthouse CI (builds, runs audit, uploads reports) |
+| `npm run audit:lighthouse` | Instructions for manual Lighthouse via Chrome DevTools |
+
+---
+
+## Lighthouse
+
+### Command
+
+```bash
+npm run audit:ci
+```
+
+This runs `lhci autorun --upload.target=temporary-public-storage`: it builds the app, starts a server, audits the production URL, asserts the metrics below, and uploads reports.
+
+### Where to check results
+
+- **Local run**: Reports are saved in `.lighthouseci/` (HTML and JSON per run). Open the `.html` files in a browser.
+- **CI (GitHub Actions)**: On push to `master`, the Lighthouse job uploads the `.lighthouseci/` folder as an artifact. Download it from the workflow run: **Actions → select run → Artifacts → lighthouse-reports** (retention: 7 days).
+- **Public report** (when using `temporary-public-storage`): LHCI outputs a URL in the logs where reports are hosted temporarily.
+
+### Target metrics (assertions in `lighthouserc.js`)
+
+| Metric | Target |
+|--------|--------|
+| Performance | ≥ 0.95 |
+| Accessibility | = 1.0 |
+| Best practices | = 1.0 |
+| Cumulative Layout Shift (CLS) | ≤ 0.05 |
+
+The audit runs against [https://file-picker-smoky.vercel.app/](https://file-picker-smoky.vercel.app/).
+
+---
+
+## CI (GitHub Actions)
+
+Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+
+**Triggers**: Push and pull requests targeting `master`.
+
+| Job | Description |
+|-----|-------------|
+| **Lint** | Runs ESLint |
+| **Type Check** | Runs TypeScript check (`npm run type-check`) |
+| **Test** | Runs Vitest (`npm run test:run`) |
+| **Lighthouse CI** | Runs Lighthouse audit on production URL. **Only on push to `master`**, depends on Lint and Type Check. Uploads reports to temporary storage and as GitHub artifact (`lighthouse-reports`, 7 days). |
+
+All jobs use Node 20, `npm ci`, and run in parallel (except Lighthouse, which waits for Lint and Type Check).
 
 ---
 
