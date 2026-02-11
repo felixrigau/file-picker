@@ -4,7 +4,7 @@ Ports & Adapters architecture for backend API access. This guide covers setup, u
 
 ## Overview
 
-Data access is abstracted behind **ports** (interfaces). The **DI Container** wires adapters (implementations) and exposes them via getters. Use only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
+Data access is abstracted behind **ports** (interfaces). The **DI Container** wires adapters (implementations) and exposes them via getters. The DI Container and `HttpClient` live in `@/infra/modules/`. Use only on the **server**: API routes, Server Actions, or Server Components. Do not expose credentials to the client.
 
 ## Requirements
 
@@ -116,6 +116,20 @@ beforeEach(() => {
 afterEach(() => {
   resetRepositories();
 });
+```
+
+## Folder structure
+
+```
+src/infra/
+├── adapters/     # api/ (real) and test/ (test doubles)
+├── mappers/     # api-mappers.ts
+├── modules/     # di-container, di-container.init, http-client
+└── types/       # api-types.ts
+
+src/domain/
+├── ports/        # Repository interfaces
+└── types/       # Domain types (FileNode, filters, etc.)
 ```
 
 ## API Reference

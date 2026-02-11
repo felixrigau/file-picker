@@ -4,6 +4,8 @@
 
 The **DI Container** (Dependency Injection Container) is the composition root: the single place where port implementations are created and injected. Server Actions obtain repositories through the DI Container; they never instantiate concrete classes.
 
+The DI Container, `HttpClient`, and init bootstrap live under `infra/modules/`.
+
 ---
 
 ## 1. Where is the DI Container initialized?
@@ -11,12 +13,12 @@ The **DI Container** (Dependency Injection Container) is the composition root: t
 The DI Container is explicitly initialized at app startup:
 
 ```
-app/layout.tsx  →  imports  →  infra/di-di-container.init.ts  →  calls  →  bootstrapDIContainer()
+app/layout.tsx  →  imports  →  infra/modules/di-container.init.ts  →  calls  →  bootstrapDIContainer()
 ```
 
-`di-container.init.ts` runs `bootstrapDIContainer()` as a side effect when imported. This creates all instances (AuthRepositoryImpl, HttpClient, ConnectionRepositoryImpl, etc.) and makes them ready to use.
+`infra/modules/di-container.init.ts` runs `bootstrapDIContainer()` as a side effect when imported. This creates all instances (AuthRepositoryImpl, HttpClient, ConnectionRepositoryImpl, etc.) and makes them ready to use.
 
-- **Production:** The layout imports `@/lib/di-container.init` on mount → the DI Container is initialized before any Server Action runs.
+- **Production:** The layout imports `@/infra/modules/di-container.init` on mount → the DI Container is initialized before any Server Action runs.
 - **Tests:** Call `resetRepositories()` and `setRepositories()` in `beforeEach` so the DI Container uses test implementations instead of real ones.
 
 ---
@@ -57,12 +59,13 @@ There are two flows:
                                        │ creates instances
                                        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  infra/modules/di-container.ts                                                   │
+│  infra/modules/di-container.ts                                            │
+│  infra/modules/http-client.ts (singleton, used by adapters)               │
 │                                                                          │
 │  authRepository         = AuthRepositoryImpl()                           │
 │  connectionRepository  = ConnectionRepositoryImpl(httpClient, ...)       │
-│  fileResourceRepository = FileResourceRepositoryImpl(...)                │
-│  knowledgeBaseRepository = KnowledgeBaseRepositoryImpl(...)              │
+│  fileResourceRepository = FileResourceRepositoryImpl(...)                 │
+│  knowledgeBaseRepository = KnowledgeBaseRepositoryImpl(...)               │
 └──────────────────────────────────┬───────────────────────────────────────┘
                                    │ get*Repository() returns instances
                                    ▼
@@ -111,7 +114,22 @@ afterEach(() => {
 
 ---
 
-## 5. DI Container API
+## 5. Infra folder structure
+
+```
+src/infra/
+├── adapters/        # API implementations (api/) and test doubles (test/)
+├── mappers/         # api-mappers.ts (API → domain mapping)
+├── modules/         # DI Container, HttpClient, init bootstrap
+│   ├── di-container.ts
+│   ├── di-container.init.ts
+│   └── http-client.ts
+└── types/           # api-types.ts (API/transport types)
+```
+
+---
+
+## 6. DI Container API
 
 | Function                       | Usage                                                 |
 | ------------------------------ | ----------------------------------------------------- |
@@ -119,6 +137,6 @@ afterEach(() => {
 | `getConnectionRepository()`    | Get the GDrive connections port                       |
 | `getFileResourceRepository()`  | Get the file resources port                           |
 | `getKnowledgeBaseRepository()` | Get the knowledge base port                           |
-| `bootstrapDIContainer()`       | Create all instances (called from di-container.init)  |
+| `bootstrapDIContainer()`       | Create all instances (called from infra/modules/di-container.init) |
 | `setRepositories(overrides)`   | Replace implementations (for tests)                   |
 | `resetRepositories()`          | Reset to initial state (for tests)                    |
